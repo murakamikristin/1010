@@ -1,0 +1,15 @@
+{
+  "name": "1010 — Minimal",
+  "short_name": "1010",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8F7F5",
+  "theme_color": "#9AB8A4",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23F8F7F5'/><g fill='%239AB8A4'> <rect x='0' y='40' width='100' height='10'/> </g></svg>",
+      "type": "image/svg+xml",
+      "sizes": "100x100"
+    }
+  ]
+}
