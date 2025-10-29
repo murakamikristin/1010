@@ -26,7 +26,7 @@
         --grid:#2A2C2E;
         --tile:#D6D8DB;
         --tile-ghost:rgba(214,216,219,0.35);
-        --accent:#9AB8A4;
+        --accent:#9AB8A4; 
         --text:#EDEEF0;
         --muted:#A0A6AE;
         --shadow: 0 8px 24px rgba(0,0,0,0.45);
@@ -35,9 +35,9 @@
     *{box-sizing:border-box;-webkit-tap-highlight-color: transparent}
     html,body{height:100%}
     body{
-      margin:0; font:16px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      margin:0; font: 16px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       background:var(--bg); color:var(--text);
-      display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px;
+      display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px; 
     }
     .topbar{width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:8px 6px;}
     .btn{border:none; background:var(--bg-elev); color:var(--text); padding:10px 14px; border-radius:12px; box-shadow:var(--shadow);
@@ -53,23 +53,31 @@
     .tile{ position:absolute; pointer-events:none; }
     .tile .b{position:absolute; width:100%; height:100%; background:var(--tile); border-radius:4px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12)}
     .tile.ghost .b{ background:var(--tile-ghost); box-shadow:none }
+
     .tray{ width:100%; display:flex; align-items:center; justify-content:center; gap:12px }
-    .piece{ position:relative; background:var(--bg-elev); border-radius:12px; box-shadow:var(--shadow); padding:12px; min-width:96px; min-height:96px; display:grid; place-items:center; touch-action:none; cursor:grab;}
+    .piece{
+      position:relative; background:var(--bg-elev); border-radius:12px; box-shadow:var(--shadow); padding:12px; min-width:96px; min-height:96px;
+      display:grid; place-items:center; touch-action:none; cursor:grab;
+    }
     .piece:active{cursor:grabbing}
     .piece-inner{ position:relative; width:80px; height:80px }
+
     .meta{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; gap:8px }
     .toggle{display:flex; align-items:center; gap:8px; font-size:14px}
     .switch{ appearance:none; width:44px; height:28px; border-radius:999px; background:#cbd5e1; position:relative; outline:none; cursor:pointer }
     .switch:checked{ background:var(--accent) }
     .switch::after{ content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .15s ease }
     .switch:checked::after{ left:19px }
+
     .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
     .modal.show{ display:flex }
     .sheet{ background:var(--bg-elev); color:var(--text); width:100%; max-width:380px; border-radius:16px; box-shadow:var(--shadow); padding:20px; text-align:center }
     .sheet h2{ margin:0 0 8px 0 }
     .sheet p{ margin:0 0 16px 0; color:var(--muted) }
+
     .clear-sweep{ position:absolute; background:var(--accent); opacity:0.14; animation:sweep .22s ease-out forwards }
     @keyframes sweep{ from{opacity:0.22} to{opacity:0} }
+
   </style>
 </head>
 <body>
@@ -116,27 +124,28 @@
   let grid = [];              // 2D array
   let score = 0;
   let tray = [];              // 3 pieces
-  let dragging = null;        // {shape, el, ghost, originIdx}
+  let dragging = null;        // {shape, originX, originY, el}
   let cellSize = 0;           // px per cell on board
   let soundsOn = false;
 
-  // Shapes are arrays of [x,y] offsets. Fixed set; random forever (no difficulty ramp).
+  // Shapes are defined as arrays of [x,y] offsets. Fixed set; no difficulty scaling.
   const SHAPES = [
-    [[0,0]],                                  // single
-    [[0,0],[1,0]],                            // 2-line
-    [[0,0],[1,0],[2,0]],                      // 3-line
-    [[0,0],[1,0],[2,0],[3,0]],                // 4-line
-    [[0,0],[1,0],[2,0],[3,0],[4,0]],          // 5-line
-    [[0,0],[1,0],[0,1],[1,1]],                // 2x2
-    [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]], // 3x3
-    [[0,0],[0,1],[0,2],[1,2]],                // L3
-    [[0,0],[1,0],[2,0],[1,1]],                // T3
-    [[0,0],[1,0],[1,1],[2,1]],                // S 2x3
-    [[0,0],[0,1],[1,1]],                      // small corner
-    [[0,0],[1,0],[2,0],[2,1]],                // L4
+    // singles & lines
+    [[0,0]],
+    [[0,0],[1,0]], [[0,0],[1,0],[2,0]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
+    // squares
+    [[0,0],[1,0],[0,1],[1,1]],
+    // 3x3 block
+    [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
+    // L / T / S variations (small)
+    [[0,0],[0,1],[0,2],[1,2]],                    // L3
+    [[0,0],[1,0],[2,0],[1,1]],                    // T3
+    [[0,0],[1,0],[1,1],[2,1]],                    // S-zigzag 2x3
+    [[0,0],[0,1],[1,1]],                          // small corner
+    [[0,0],[1,0],[2,0],[2,1]],                    // L4
   ];
 
-  // ===== Init UI refs =====
+  // ===== Init UI =====
   const boardEl = qs('#board');
   const trayEl  = qs('#tray');
   const scoreEl = qs('#score');
@@ -152,9 +161,10 @@
       c.className='cell';
       boardEl.appendChild(c);
     }
+    // compute cell size for absolute tiles
     const rect = boardEl.getBoundingClientRect();
-    const gap = 2; const pad = 10; // match CSS
-    cellSize = (rect.width - pad*2 - gap*9) / 10;
+    const gap = 2; const pad = 10; // as in CSS
+    cellSize = (rect.width - pad*2 - gap*9) / 10; // approx; good enough for snapping visuals
   }
 
   function newGrid(){
@@ -180,12 +190,13 @@
       card.className='piece'; card.setAttribute('data-idx', idx);
       const inner = document.createElement('div'); inner.className='piece-inner';
       card.appendChild(inner); trayEl.appendChild(card);
-      drawShape(inner, p.shape, 12, 12);
+      drawShape(inner, p.shape, 12, 12); // draw miniature blocks
       attachDrag(card, p.shape, idx);
     });
   }
 
   function drawShape(container, shape, bx=0, by=0){
+    // find bounds
     const xs = shape.map(s=>s[0]); const ys = shape.map(s=>s[1]);
     const w = Math.max(...xs)+1; const h = Math.max(...ys)+1;
     const unit = Math.min((container.clientWidth - bx)/w, (container.clientHeight - by)/h);
@@ -200,14 +211,18 @@
 
   // ===== Drag & Place =====
   function attachDrag(card, shape, idx){
-    let startX=0, startY=0; let tileEl=null;
+    let startX=0, startY=0; let tileEl=null; let boardRect=null;
 
     const start=(x,y)=>{
+      boardRect = boardEl.getBoundingClientRect();
       tileEl = document.createElement('div'); tileEl.className='tile';
       document.body.appendChild(tileEl);
       const ghost = document.createElement('div'); ghost.className='tile ghost'; document.body.appendChild(ghost);
       tileEl._ghost = ghost;
-      shape.forEach(()=>{ const b=document.createElement('div'); b.className='b'; tileEl.appendChild(b); const g=document.createElement('div'); g.className='b'; ghost.appendChild(g); });
+      shape.forEach(([sx,sy])=>{
+        const b=document.createElement('div'); b.className='b'; tileEl.appendChild(b);
+        const g=document.createElement('div'); g.className='b'; ghost.appendChild(g);
+      });
       dragging = {shape: JSON.parse(JSON.stringify(shape)), el: tileEl, ghost, originIdx: idx};
       move(x,y);
     };
@@ -217,7 +232,8 @@
       const t = dragging.el; const g = dragging.ghost;
       t.style.left=(x-20)+'px'; t.style.top=(y-20)+'px';
       g.style.left=(x-20)+'px'; g.style.top=(y-20)+'px';
-      const {gx, gy} = computeSnap(x,y, dragging.shape);
+      // Ghost snap preview
+      const {gx, gy, fits} = computeSnap(x,y, dragging.shape);
       positionBlocks(g, gx, gy, dragging.shape, true);
     };
 
@@ -229,6 +245,8 @@
         removeTrayPiece(dragging.originIdx);
         playTick();
         postPlace();
+      } else {
+        // No red outline; just bounce-back by removing the floating tile
       }
       dragging.el.remove(); dragging.ghost.remove(); dragging=null;
     };
@@ -243,11 +261,11 @@
     card.addEventListener('touchend', e=>{ const t=e.changedTouches[0]||{clientX:startX,clientY:startY}; end(t.clientX,t.clientY); }, {passive:true});
   }
 
-  function positionBlocks(container, gx, gy, shape){
+  function positionBlocks(container, gx, gy, shape, isGhost){
     const bs = container.querySelectorAll('.b');
     shape.forEach(([sx,sy],i)=>{
       const x = gx + sx; const y = gy + sy;
-      const left = boardEl.offsetLeft + 10 + x*(cellSize+2);
+      const left = boardEl.offsetLeft + 10 + x*(cellSize+2); // match CSS pad/gap
       const top  = boardEl.offsetTop  + 10 + y*(cellSize+2);
       const b = bs[i]; b.style.position='absolute'; b.style.left=left+'px'; b.style.top=top+'px'; b.style.width=cellSize+'px'; b.style.height=cellSize+'px';
     });
@@ -278,7 +296,7 @@
 
   function renderBoardTiles(){
     // Remove existing absolute tiles and redraw based on grid
-    qsa('.board .b').forEach(el=>el.parentElement.remove());
+    qsa('.board .b').forEach(el=>el.parentElement.remove()); // clean old tiles in board
     for(let yy=0; yy<BOARD_SIZE; yy++){
       for(let xx=0; xx<BOARD_SIZE; xx++){
         if(grid[yy][xx]===CELL){
@@ -293,10 +311,12 @@
 
   function removeTrayPiece(idx){
     tray[idx]=null;
+    // prune nulls; if all consumed, deal 3 more
     if(tray.every(p=>p===null)) refillTray(); else renderTray();
   }
 
   function postPlace(){
+    // clear lines
     const rowsToClear = [];
     const colsToClear = [];
     for(let y=0;y<BOARD_SIZE;y++) if(grid[y].every(v=>v===CELL)) rowsToClear.push(y);
@@ -306,7 +326,7 @@
     }
 
     if(rowsToClear.length || colsToClear.length){
-      // matcha sweep
+      // visuals: matcha sweep
       rowsToClear.forEach(y=>{
         const sweep = document.createElement('div'); sweep.className='clear-sweep';
         sweep.style.left='10px'; sweep.style.top=(10 + y*(cellSize+2))+'px';
@@ -328,7 +348,7 @@
       playClear();
     }
 
-    // game over?
+    // check game over: any tray piece fits anywhere?
     const remaining = tray.filter(Boolean);
     if(remaining.length){
       const anyFit = remaining.some(p=> pieceHasFit(p.shape));
@@ -377,5 +397,6 @@
   // ===== PWA support =====
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
   </script>
+
 </body>
 </html>
