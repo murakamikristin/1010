@@ -21,7 +21,7 @@
     --board-size:520px;
     --cell-radius:8px;
     --pip-radius:6px;
-    --grid-gap:6px;
+    --grid-gap:4px;
   }
   @media (max-height: 760px){
     body{ gap:clamp(12px,3vh,18px); padding-top:16px; padding-bottom:16px; }
@@ -300,9 +300,9 @@
 /* ------- Minimal 1010 (drag-and-drop) ------- */
 const BOARD=10, EMPTY=0, FILLED=1;
 const CLEAR_DELAY_STEP_MS=50;
-const TRAY_SCALE=0.74;
-const MIN_TRAY_CELL=18;
-const MIN_TRAY_GAP=4;
+const TRAY_SCALE=0.64;
+const MIN_TRAY_CELL=15;
+const MIN_TRAY_GAP=3;
 let grid, score=0, tray=[], selected=null;
 let boardCellSize=0, boardGap=8, isClearing=false;
 let pendingAnchor=null, pendingAnchorIdx=null;
@@ -391,10 +391,10 @@ function recomputeBoardMetrics(){
   const newSize=Math.round(someCell.getBoundingClientRect().width);
   if(!newSize || newSize===boardCellSize) return;
   boardCellSize=newSize;
-  const gapPx=Math.max(1, Math.min(6, boardCellSize*0.05));
+  const gapPx=Math.max(1, Math.min(5, boardCellSize*0.04));
   boardGap=gapPx;
   document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
-  const trayGap=Math.max(10, gapPx*2.5);
+  const trayGap=Math.max(8, gapPx*2);
   trayEl.style.setProperty('--piece-gap', trayGap+'px');
   const radius=Math.max(3, Math.min(8, boardCellSize*0.06));
   document.documentElement.style.setProperty('--cell-radius', radius+'px');
