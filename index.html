@@ -6,65 +6,178 @@
 <title>1010 — Minimal</title>
 <style>
   :root{
-    --bg:#F8F7F5;          /* page & board background */
-    --tile:#FFFFFF;        /* tile fill (white) */
-    --outline:var(--bg);   /* outlines use the background color */
-    --text:#111213;
+    --bg:#F4F1EB;
+    --board:var(--bg);
+    --tile:#FFFFFF;
+    --block:#57606A;
+    --text:#8A8172;
+    --shadow:0 14px 45px rgba(39,36,29,.12);
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#0E0F10;
-      --tile:#FFFFFF;
-      --outline:#0E0F10;
-      --text:#EDEEF0;
+      --bg:#050506;
+      --board:var(--bg);
+      --tile:#0E1012;
+      --block:#8B96A3;
+      --text:#E0E3EA;
+      --shadow:0 18px 40px rgba(0,0,0,.65);
     }
   }
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{
-    margin:0; background:var(--bg); color:var(--text);
-    font:16px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
-    display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px;
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:500 18px/1.45 "Inter", system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:24px;
+    padding:32px 18px 48px;
+    min-height:100vh;
   }
 
-  /* top bar */
-  .topbar{width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:8px 6px;}
-  .btn{background:transparent; border:none; font-weight:700; font-size:18px; letter-spacing:.2px; cursor:pointer}
+  .topbar{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 26px;
+    border-radius:999px;
+    border:1px solid rgba(0,0,0,.04);
+    background:rgba(255,255,255,.75);
+    backdrop-filter:blur(18px);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    font-size:20px;
+    letter-spacing:.2px;
+    gap:16px;
+    color:var(--text);
+  }
+  @media (prefers-color-scheme: dark){
+    .topbar{
+      background:rgba(14,15,16,.85);
+      border-color:rgba(255,255,255,.08);
+      box-shadow:0 14px 40px rgba(0,0,0,.65);
+    }
+  }
+  .btn{
+    background:transparent;
+    border:none;
+    font-weight:600;
+    font-size:20px;
+    color:var(--text);
+    cursor:pointer;
+    padding:0;
+  }
   .btn:active{opacity:.7}
-  .score{font-weight:700; font-size:18px}
+  .score{
+    font-weight:700;
+    font-size:32px;
+    letter-spacing:.4px;
+    color:var(--text);
+  }
 
-  .wrap{width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:16px}
+  .wrap{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:28px;
+  }
 
-  /* board: same bg as page; outlines = bg; tiles = white; rounded corners per cell */
   .board{
-    width:100%; aspect-ratio:1/1; background:var(--bg);
-    display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr);
+    width:100%;
+    aspect-ratio:1/1;
+    background:var(--board);
+    display:grid;
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:repeat(10,1fr);
+    gap:8px;
+    padding:16px;
+    border-radius:18px;
+    box-shadow:none;
+  }
+  .board.dragging{
+    box-shadow:none;
   }
   .cell{
-    background:transparent;
-    border:1px solid var(--outline);     /* white-on-bg look comes from these lines */
-    border-radius:10px;                  /* more rounded corners */
+    position:relative;
+    overflow:hidden;
+    background:var(--tile);
+    border-radius:10px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
   .cell.filled{
-    background:var(--tile);              /* white tiles */
-    border-color:var(--outline);         /* keep per-cell lines visible between adjacent tiles */
+    background:var(--block);
+    box-shadow:none;
   }
-  .cell.preview{ outline:2px solid rgba(255,255,255,.6); outline-offset:-2px; border-radius:10px }
+  .cell.preview{
+    box-shadow:0 0 0 3px rgba(87,96,106,.35) inset;
+  }
+  .cell.clearing{
+    animation:clearSentinel .35s ease forwards;
+    animation-delay:var(--clear-delay,0s);
+  }
+  .cell.clearing::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    background:var(--block);
+    animation:cascadeClear .35s ease forwards;
+    animation-delay:var(--clear-delay,0s);
+  }
+  @keyframes clearSentinel{
+    0%{opacity:1;}
+    100%{opacity:1;}
+  }
+  @keyframes cascadeClear{
+    0%{transform:scale(1);opacity:1;}
+    100%{transform:translateY(-10px);opacity:0;}
+  }
   .board.shake{animation:shake .15s}
   @keyframes shake{0%{transform:translateX(0)}33%{transform:translateX(-4px)}66%{transform:translateX(4px)}100%{transform:translateX(0)}}
 
-  /* tray: pieces drawn at exact board 1×1 size, centered; each mini tile has same styling */
-  .tray{ width:100%; display:flex; align-items:center; justify-content:center; gap:16px; }
-  .piece{ background:transparent; padding:6px; border-radius:12px; cursor:pointer; display:grid; place-items:center; }
-  .piece.selected{ outline:2px solid #fff; outline-offset:2px; border-radius:12px; }
-  .piece-inner{ position:relative; }
+  .tray{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:26px;
+    flex-wrap:nowrap;
+    overflow:visible;
+  }
+  .piece{
+    flex:0 0 auto;
+    background:transparent;
+    border:none;
+    border-radius:14px;
+    padding:8px 0;
+    cursor:grab;
+    box-shadow:none;
+    transition:transform .2s ease;
+  }
+  .piece:active{cursor:grabbing}
+  .piece.selected{ transform:scale(1.03); }
+  .piece-inner{
+    display:grid;
+    gap:8px;
+    justify-items:stretch;
+    align-items:stretch;
+  }
 
   .b{
-    position:absolute; width:100%; height:100%;
-    background:var(--tile);
-    border:1px solid var(--outline);    /* same per-tile outline as board */
-    border-radius:10px;
+    width:100%;
+    height:100%;
+    background:var(--block);
+    border-radius:12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
   }
 
   /* modal */
@@ -95,10 +208,42 @@
   </div>
 
 <script>
-/* ------- Minimal 1010 (tap-to-place) ------- */
-const BOARD=10, EMPTY=0, FILLED=1;
+/* ------- Minimal 1010 (drag-and-drop) ------- */
+const BOARD=10, EMPTY=0, FILLED=1, PIECE_GAP=8;
+const CLEAR_DELAY_STEP_MS=50;
 let grid, score=0, tray=[], selected=null;
-let boardCellSize=0;
+let boardCellSize=0, isClearing=false;
+let pendingAnchor=null, pendingAnchorIdx=null;
+
+const ZERO_ANCHOR=()=>({dx:0,dy:0});
+
+function getSelectedAnchor(){
+  return (selected && selected.anchor) ? selected.anchor : ZERO_ANCHOR();
+}
+
+function buildPlacementOffsets(shape){
+  const anchor=getSelectedAnchor();
+  const offsets=[];
+  const seen=new Set();
+  const add=(dx,dy)=>{
+    const key=`${dx},${dy}`;
+    if(!seen.has(key)){ seen.add(key); offsets.push({dx,dy}); }
+  };
+  add(anchor.dx, anchor.dy);
+  shape.forEach(([dx,dy])=>add(dx,dy));
+  return offsets;
+}
+
+function findPlacementOrigin(x,y){
+  if(!selected || !selected.shape) return null;
+  const shape=selected.shape;
+  const offsets=buildPlacementOffsets(shape);
+  for(const off of offsets){
+    const ox=x-off.dx, oy=y-off.dy;
+    if(canPlaceAt(ox,oy,shape)) return {ox,oy};
+  }
+  return null;
+}
 
 const SHAPES=[
   [[0,0]], [[0,0],[1,0]], [[0,0],[1,0],[2,0]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
@@ -125,8 +270,10 @@ function buildBoard(){
     d.dataset.x=(i%BOARD);
     d.dataset.y=Math.floor(i/BOARD);
     d.addEventListener('pointerenter', previewHover);
-    d.addEventListener('pointerleave', ()=>d.classList.remove('preview'));
+    d.addEventListener('pointerleave', ()=>{ if(selected) clearPreviewAll(); });
     d.addEventListener('click', tryPlaceHere);
+    d.addEventListener('dragover', handleDragOver);
+    d.addEventListener('drop', handleDrop);
     boardEl.appendChild(d);
   }
   const someCell=boardEl.firstElementChild;
@@ -135,20 +282,34 @@ function buildBoard(){
 
 function newGrid(){ grid=Array.from({length:BOARD},()=>Array(BOARD).fill(EMPTY)); updateBoardCells(); }
 function dealPiece(){ return {shape: JSON.parse(JSON.stringify(SHAPES[Math.floor(Math.random()*SHAPES.length)]))}; }
-function refillTray(){ tray=[dealPiece(),dealPiece(),dealPiece()]; renderTray(); }
+function refillTray(){
+  tray=[dealPiece(),dealPiece(),dealPiece()];
+  selected=null;
+  clearPreviewAll();
+  clearPendingAnchor();
+  renderTray();
+}
 
 function drawPiece(container,shape){
   container.innerHTML='';
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
-  container.style.width = (w*boardCellSize)+'px';
-  container.style.height= (h*boardCellSize)+'px';
-  container.parentElement.style.width  = (w*boardCellSize+12)+'px';
-  container.parentElement.style.height = (h*boardCellSize+12)+'px';
+  const width=(w*boardCellSize)+Math.max(0,w-1)*PIECE_GAP;
+  const height=(h*boardCellSize)+Math.max(0,h-1)*PIECE_GAP;
+  container.style.display='grid';
+  container.style.width=width+'px';
+  container.style.height=height+'px';
+  container.style.gridTemplateColumns=`repeat(${w}, ${boardCellSize}px)`;
+  container.style.gridTemplateRows=`repeat(${h}, ${boardCellSize}px)`;
+  container.style.gap=PIECE_GAP+'px';
+  container.parentElement.style.width=(width+18)+'px';
+  container.parentElement.style.height=(height+18)+'px';
   shape.forEach(([x,y])=>{
     const b=document.createElement('div'); b.className='b';
-    b.style.left=(x*boardCellSize)+'px'; b.style.top=(y*boardCellSize)+'px';
-    b.style.width=boardCellSize+'px'; b.style.height=boardCellSize+'px';
+    b.dataset.cx=x;
+    b.dataset.cy=y;
+    b.style.gridColumn=(x+1);
+    b.style.gridRow=(y+1);
     container.appendChild(b);
   });
 }
@@ -156,11 +317,79 @@ function drawPiece(container,shape){
 function renderTray(){
   trayEl.innerHTML='';
   tray.forEach((p,idx)=>{
-    const card=document.createElement('div'); card.className='piece'+(selected&&selected.idx===idx?' selected':'');
-    card.onclick=()=>{ selected=(selected&&selected.idx===idx)?null:{shape:p.shape,idx}; renderTray(); clearPreviewAll(); };
-    const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner); trayEl.appendChild(card);
+    const card=document.createElement('div');
+    const isActive=selected && selected.idx===idx;
+    card.className='piece'+(isActive?' selected':'');
+    card.setAttribute('draggable','true');
+    card.addEventListener('pointerdown', e=>rememberAnchor(e,idx));
+    card.addEventListener('click', ()=>handlePieceClick(idx));
+    card.addEventListener('dragstart', e=>beginDrag(e,idx));
+    card.addEventListener('dragend', finishDrag);
+    const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
+    trayEl.appendChild(card);
     drawPiece(inner,p.shape);
   });
+}
+
+function rememberAnchor(e,idx){
+  const tile=e.target.closest('.b');
+  if(tile){
+    pendingAnchor={dx:+tile.dataset.cx, dy:+tile.dataset.cy};
+    pendingAnchorIdx=idx;
+  }else{
+    clearPendingAnchor();
+  }
+}
+
+function clearPendingAnchor(){
+  pendingAnchor=null;
+  pendingAnchorIdx=null;
+}
+
+function takeAnchorFromDrag(e,idx){
+  const pending = (pendingAnchorIdx===idx && pendingAnchor) ? pendingAnchor : null;
+  clearPendingAnchor();
+  const fromPoint = anchorFromPointer(e);
+  return pending || fromPoint || ZERO_ANCHOR();
+}
+
+function anchorFromPointer(e){
+  if(typeof e.clientX!=='number' || typeof e.clientY!=='number') return null;
+  const el=document.elementFromPoint(e.clientX, e.clientY);
+  const tile=el && el.closest('.b');
+  if(tile && tile.dataset.cx!=null){
+    return {dx:+tile.dataset.cx, dy:+tile.dataset.cy};
+  }
+  return null;
+}
+
+function handlePieceClick(idx){
+  clearPendingAnchor();
+  if(selected && selected.idx===idx){
+    selected=null;
+  }else{
+    selected={shape:tray[idx].shape, idx, anchor:ZERO_ANCHOR()};
+  }
+  clearPreviewAll();
+  renderTray();
+}
+
+function beginDrag(e,idx){
+  if(isClearing){ e.preventDefault(); return; }
+  const anchor = takeAnchorFromDrag(e,idx);
+  selected={shape:tray[idx].shape, idx, anchor};
+  boardEl.classList.add('dragging');
+  if(e.dataTransfer){
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  }
+}
+
+function finishDrag(){
+  boardEl.classList.remove('dragging');
+  clearPreviewAll();
+  if(selected) selected.anchor=ZERO_ANCHOR();
+  renderTray();
 }
 
 function updateBoardCells(){
@@ -181,41 +410,124 @@ function canPlaceAt(x,y,shape){
 function placeAt(x,y,shape){
   shape.forEach(([dx,dy])=>{ grid[y+dy][x+dx]=FILLED; });
   score += shape.length; scoreEl.textContent=score;
-  clearLines(); updateBoardCells();
+  updateBoardCells();
+  clearLines();
 }
 
 function clearLines(){
   const rows=[], cols=[];
   for(let y=0;y<BOARD;y++) if(grid[y].every(v=>v===FILLED)) rows.push(y);
-  for(let x=0;x<BOARD;x++){ let ok=true; for(let y=0;y<BOARD;y++) if(grid[y][x]!==FILLED){ok=false;break;} if(ok) cols.push(x); }
-  if(rows.length||cols.length){
-    rows.forEach(y=> grid[y]=Array(BOARD).fill(EMPTY));
-    cols.forEach(x=>{ for(let y=0;y<BOARD;y++) grid[y][x]=EMPTY; });
-    score += (rows.length+cols.length)*10; scoreEl.textContent=score;
+  for(let x=0;x<BOARD;x++){
+    let ok=true;
+    for(let y=0;y<BOARD;y++) if(grid[y][x]!==FILLED){ ok=false; break; }
+    if(ok) cols.push(x);
   }
+  if(!rows.length && !cols.length) return;
+
+  isClearing=true;
+  const coords=new Set();
+  const rowSet=new Set(rows);
+  const colSet=new Set(cols);
+  const delayStepSeconds=CLEAR_DELAY_STEP_MS/1000;
+  let pendingAnimations=0;
+  let resolved=false;
+  const finishClear=()=>{
+    if(resolved) return;
+    resolved=true;
+    isClearing=false;
+  };
+  rows.forEach(y=>{ for(let x=0;x<BOARD;x++) coords.add(`${x},${y}`); });
+  cols.forEach(x=>{ for(let y=0;y<BOARD;y++) coords.add(`${x},${y}`); });
+
+  coords.forEach(key=>{
+    const [cx,cy]=key.split(',').map(Number);
+    grid[cy][cx]=EMPTY;
+    const cell=document.querySelector(`.cell[data-x="${cx}"][data-y="${cy}"]`);
+    if(cell){
+      cell.classList.remove('filled');
+      cell.classList.remove('preview');
+      const rowDelay = rowSet.has(cy) ? cx*delayStepSeconds : 0;
+      const colDelay = colSet.has(cx) ? cy*delayStepSeconds : 0;
+      const delay = Math.max(rowDelay, colDelay);
+      cell.style.setProperty('--clear-delay', `${delay}s`);
+      cell.classList.add('clearing');
+      pendingAnimations++;
+      const handle=()=>{
+        cell.classList.remove('clearing');
+        cell.style.removeProperty('--clear-delay');
+        if(--pendingAnimations===0) finishClear();
+      };
+      cell.addEventListener('animationend', handle, {once:true});
+    }
+  });
+
+  score += (rows.length+cols.length)*10;
+  scoreEl.textContent=score;
+  if(pendingAnimations===0) finishClear();
 }
 
 function previewHover(e){
-  if(!selected) return; clearPreviewAll();
-  const x=+e.currentTarget.dataset.x, y=+e.currentTarget.dataset.y, shape=selected.shape;
-  if(canPlaceAt(x,y,shape)) shape.forEach(([dx,dy])=>{
-    const cell=document.querySelector(`.cell[data-x="${x+dx}"][data-y="${y+dy}"]`); if(cell) cell.classList.add('preview');
+  showPreviewAt(+e.currentTarget.dataset.x, +e.currentTarget.dataset.y);
+}
+
+function showPreviewAt(x,y){
+  if(!selected) return;
+  clearPreviewAll();
+  const origin=findPlacementOrigin(x,y);
+  if(!origin) return;
+  const {ox,oy}=origin;
+  const shape=selected.shape;
+  shape.forEach(([dx,dy])=>{
+    const cell=document.querySelector(`.cell[data-x="${ox+dx}"][data-y="${oy+dy}"]`);
+    if(cell) cell.classList.add('preview');
   });
 }
-function clearPreviewAll(){ document.querySelectorAll('.cell.preview').forEach(c=>c.classList.remove('preview')); }
+
+function clearPreviewAll(){
+  document.querySelectorAll('.cell.preview').forEach(c=>c.classList.remove('preview'));
+}
+
+function handleDragOver(e){
+  if(!selected) return;
+  e.preventDefault();
+  if(e.dataTransfer) e.dataTransfer.dropEffect='move';
+  const cell=e.currentTarget;
+  showPreviewAt(+cell.dataset.x, +cell.dataset.y);
+}
+
+function handleDrop(e){
+  if(!selected) return;
+  e.preventDefault();
+  const cell=e.currentTarget;
+  attemptPlacement(+cell.dataset.x, +cell.dataset.y);
+}
 
 function tryPlaceHere(e){
-  if(!selected) return;
-  const x=+e.currentTarget.dataset.x, y=+e.currentTarget.dataset.y;
-  const piece=selected.shape, idx=selected.idx;
-  if(canPlaceAt(x,y,piece)){
-    placeAt(x,y,piece);
-    tray.splice(idx,1); selected=null;
-    if(tray.length===0) refillTray(); else renderTray();
-    clearPreviewAll(); checkGameOver();
-  }else{
-    boardEl.classList.remove('shake'); void boardEl.offsetWidth; boardEl.classList.add('shake');
+  attemptPlacement(+e.currentTarget.dataset.x, +e.currentTarget.dataset.y);
+}
+
+function attemptPlacement(x,y){
+  if(!selected) return false;
+  if(isClearing){ bumpBoard(); return false; }
+  const piece=selected.shape;
+  const idx=selected.idx;
+  const origin=findPlacementOrigin(x,y);
+  if(!origin){
+    bumpBoard();
+    return false;
   }
+  const {ox,oy}=origin;
+  placeAt(ox,oy,piece);
+  if(typeof idx==='number') tray.splice(idx,1);
+  selected=null;
+  clearPreviewAll();
+  if(tray.length===0){ refillTray(); } else { renderTray(); }
+  checkGameOver();
+  return true;
+}
+
+function bumpBoard(){
+  boardEl.classList.remove('shake'); void boardEl.offsetWidth; boardEl.classList.add('shake');
 }
 
 function checkGameOver(){
@@ -231,7 +543,15 @@ document.getElementById('resetBtn').onclick=()=>start();
 document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('show'); start(); };
 
 /* boot */
-function start(){ score=0; scoreEl.textContent=score; buildBoard(); newGrid(); refillTray(); }
+function start(){
+  score=0;
+  scoreEl.textContent=score;
+  selected=null;
+  isClearing=false;
+  clearPreviewAll();
+  boardEl.classList.remove('dragging');
+  buildBoard(); newGrid(); clearPendingAnchor(); refillTray();
+}
 start();
 </script>
 </body>

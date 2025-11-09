@@ -1,0 +1,24 @@
+{
+  "name": "1010",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "live-server --port=5500 --wait=250 index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murakamikristin/1010.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/murakamikristin/1010/issues"
+  },
+  "homepage": "https://github.com/murakamikristin/1010#readme",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
