@@ -21,7 +21,7 @@
     --board-size:520px;
     --cell-radius:8px;
     --pip-radius:6px;
-    --grid-gap:8px;
+    --grid-gap:6px;
   }
   @media (max-height: 760px){
     body{ gap:clamp(12px,3vh,18px); padding-top:16px; padding-bottom:16px; }
@@ -390,10 +390,10 @@ function recomputeBoardMetrics(){
   const newSize=Math.round(someCell.getBoundingClientRect().width);
   if(!newSize || newSize===boardCellSize) return;
   boardCellSize=newSize;
-  const gapPx=Math.max(2, Math.min(8, boardCellSize*0.08));
+  const gapPx=Math.max(1, Math.min(6, boardCellSize*0.05));
   boardGap=gapPx;
   document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
-  const trayGap=Math.max(12, gapPx*3);
+  const trayGap=Math.max(10, gapPx*2.5);
   trayEl.style.setProperty('--piece-gap', trayGap+'px');
   const radius=Math.max(3, Math.min(8, boardCellSize*0.06));
   document.documentElement.style.setProperty('--cell-radius', radius+'px');
@@ -500,10 +500,10 @@ function createPointerGhost(shape){
   document.body.appendChild(pointerGhost);
   drawPiece(pointerGhost,shape,{fullSize:true});
   const rect=pointerGhost.getBoundingClientRect();
-  const yOffset=Math.max(20, rect.height*0.2);
+  const yOffset=Math.max(8, rect.height*0.1);
   pointerGhostOffset={
     x:rect.width/2,
-    y:rect.height + yOffset
+    y:rect.height/2 + yOffset
   };
   return pointerGhost;
 }
