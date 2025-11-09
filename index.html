@@ -6,17 +6,17 @@
 <title>1010 — Minimal</title>
 <style>
   :root{
-    --bg:#F8F7F5;          /* page & board background */
-    --tile:#57606A;        /* filled block */
-    --outline:#ffffff;     /* grid outline */
+    --bg:#F8F7F5;          /* page & board background (same) */
+    --tile:#57606A;        /* block color (single slate) */
+    --outline:#FFFFFF;     /* grid line color */
     --text:#111213;
     --shadow:0 8px 24px rgba(17,18,19,.08);
   }
   @media (prefers-color-scheme: dark){
     :root{
       --bg:#0E0F10;
-      --tile:#D6D8DB;
-      --outline:#ffffff;
+      --tile:#D6D8DB;      /* slate-light in dark mode */
+      --outline:#FFFFFF;
       --text:#EDEEF0;
       --shadow:0 8px 24px rgba(0,0,0,.45);
     }
@@ -30,52 +30,44 @@
     display:flex; flex-direction:column; align-items:center; gap:12px; padding:12px;
   }
 
-  /* top bar */
+  /* Top bar */
   .topbar{width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; padding:8px 6px;}
-  .btn{
-    border:none; background:#fff; color:var(--text);
-    padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); font-size:14px; cursor:pointer;
-  }
+  .btn{border:none; background:#fff; color:var(--text); padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); font-size:14px; cursor:pointer}
   .btn:active{transform:translateY(1px)}
   .score{font-weight:600; font-size:16px}
 
-  /* layout */
-  .wrap{width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:12px}
+  /* Layout */
+  .wrap{width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:16px}
 
-  /* board: same background as page; only white outlines */
+  /* Board: same bg as page; only white outlines */
   .board{
-    width:100%; aspect-ratio:1/1;
-    background:var(--bg);
+    width:100%; aspect-ratio:1/1; background:var(--bg);
     display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr);
-    /* no gap — outlines are borders of each cell */
   }
   .cell{
     background:transparent;
-    border:1px solid var(--outline);
+    border:1px solid var(--outline); /* the only visible grid */
   }
-  .cell.filled{ background:var(--tile); border-color:transparent; } /* filled cell hides its outline */
-  .cell.preview{ outline:2px solid rgba(255,255,255,.6); outline-offset:-2px; } /* subtle preview */
+  .cell.filled{ background:var(--tile); border-color:transparent; }
+  .cell.preview{ outline:2px solid rgba(255,255,255,.6); outline-offset:-2px; }
   .board.shake{animation:shake .15s}
   @keyframes shake{0%{transform:translateX(0)}33%{transform:translateX(-4px)}66%{transform:translateX(4px)}100%{transform:translateX(0)}}
 
-  /* tray: no white boxes behind pieces; pieces centered & drawn at the same size as board cells */
-  .tray{ width:100%; display:flex; align-items:center; justify-content:center; gap:16px; padding-top:6px; }
-  .piece{
-    background:transparent; border-radius:12px; /* no box */
-    width:auto; height:auto; padding:6px; cursor:pointer; display:grid; place-items:center;
-  }
-  .piece.selected{ outline:2px solid var(--outline); outline-offset:2px; border-radius:12px; }
+  /* Tray: render pieces at exact board cell size and center them */
+  .tray{ width:100%; display:flex; align-items:center; justify-content:center; gap:16px; }
+  .piece{ background:transparent; padding:6px; border-radius:12px; cursor:pointer; display:grid; place-items:center; }
+  .piece.selected{ outline:2px solid var(--outline); outline-offset:2px; }
   .piece-inner{ position:relative; }
 
-  .b{ position:absolute; width:100%; height:100%; background:var(--tile); }
+  .b{ position:absolute; width:100%; height:100%; background:var(--tile); } /* same tile color everywhere */
 
-  /* modal */
+  /* Modal */
   .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
   .modal.show{ display:flex }
   .sheet{ background:#fff; color:var(--text); width:100%; max-width:380px; border-radius:16px; box-shadow:var(--shadow); padding:20px; text-align:center }
-  .sheet h2{ margin:0 0 8px 0 }
-  .sheet p{ margin:0 0 16px 0; opacity:.8 }
+  .sheet h2{ margin:0 0 8px 0 } .sheet p{ margin:0 0 16px 0; opacity:.8 }
 </style>
+<meta http-equiv="Cache-Control" content="no-store" />
 </head>
 <body>
   <div class="topbar">
@@ -101,7 +93,7 @@
 /* ------- Minimal 1010 (tap-to-place) ------- */
 const BOARD=10, EMPTY=0, FILLED=1;
 let grid, score=0, tray=[], selected=null;
-let boardCellSize=0; // used to render tray pieces at the exact same size
+let boardCellSize=0;
 
 const SHAPES=[
   [[0,0]], [[0,0],[1,0]], [[0,0],[1,0],[2,0]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
@@ -122,7 +114,6 @@ const finalScoreEl=document.getElementById('finalScore');
 
 function buildBoard(){
   boardEl.innerHTML='';
-  // build 10x10, measure cell size after layout
   for(let i=0;i<BOARD*BOARD;i++){
     const d=document.createElement('div');
     d.className='cell';
@@ -133,7 +124,6 @@ function buildBoard(){
     d.addEventListener('click', tryPlaceHere);
     boardEl.appendChild(d);
   }
-  // compute board cell size once
   const someCell=boardEl.firstElementChild;
   boardCellSize=Math.round(someCell.getBoundingClientRect().width);
 }
@@ -144,18 +134,16 @@ function refillTray(){ tray=[dealPiece(),dealPiece(),dealPiece()]; renderTray();
 
 function drawPiece(container,shape){
   container.innerHTML='';
-  // size the inner box to tightly fit the shape using the board cell size
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
   container.style.width = (w*boardCellSize)+'px';
   container.style.height= (h*boardCellSize)+'px';
   container.parentElement.style.width  = (w*boardCellSize+12)+'px';
   container.parentElement.style.height = (h*boardCellSize+12)+'px';
-  const offX=0, offY=0, unit=boardCellSize;
   shape.forEach(([x,y])=>{
     const b=document.createElement('div'); b.className='b';
-    b.style.left=(offX+x*unit)+'px'; b.style.top=(offY+y*unit)+'px';
-    b.style.width=unit+'px'; b.style.height=unit+'px';
+    b.style.left=(x*boardCellSize)+'px'; b.style.top=(y*boardCellSize)+'px';
+    b.style.width=boardCellSize+'px'; b.style.height=boardCellSize+'px';
     container.appendChild(b);
   });
 }
@@ -240,9 +228,6 @@ document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('s
 /* boot */
 function start(){ score=0; scoreEl.textContent=score; buildBoard(); newGrid(); refillTray(); }
 start();
-
-/* Keep this file standalone & cache-free while you style.
-   (Add manifest + service worker later, after you're happy.) */
 </script>
 </body>
 </html>
