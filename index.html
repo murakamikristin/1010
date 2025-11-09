@@ -19,8 +19,8 @@
     --shadow:0 14px 45px rgba(39,36,29,.12);
     --max-width:520px;
     --board-size:520px;
-    --cell-radius:10px;
-    --pip-radius:8px;
+    --cell-radius:8px;
+    --pip-radius:6px;
     --grid-gap:8px;
   }
   @media (max-height: 760px){
@@ -228,6 +228,19 @@
   .piece.dragging{
     visibility:hidden;
   }
+  .drag-ghost,
+  .pointer-ghost{
+    position:fixed;
+    top:0;
+    left:0;
+    pointer-events:none;
+    z-index:1000;
+    transform:translate(-9999px,-9999px);
+    will-change:transform;
+  }
+  .drag-ghost{
+    z-index:-1;
+  }
   .piece-inner{
     display:grid;
     gap:var(--grid-gap);
@@ -300,6 +313,8 @@ let currentBoardPixels=0;
 let pointerDragId=null;
 let pointerCaptureTarget=null;
 let dragGhost=null;
+let pointerGhost=null;
+let pointerGhostOffset={x:0,y:0};
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -380,9 +395,9 @@ function recomputeBoardMetrics(){
   document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
   const trayGap=Math.max(12, gapPx*3);
   trayEl.style.setProperty('--piece-gap', trayGap+'px');
-  const radius=Math.max(4, Math.min(12, boardCellSize*0.12));
-  document.documentElement.style.setProperty('--cell-radius', (radius+2)+'px');
-  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-1)+'px');
+  const radius=Math.max(3, Math.min(8, boardCellSize*0.06));
+  document.documentElement.style.setProperty('--cell-radius', radius+'px');
+  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-2)+'px');
   renderTray();
 }
 
@@ -478,6 +493,36 @@ function createDragGhost(shape){
   return ghost;
 }
 
+function createPointerGhost(shape){
+  removePointerGhost();
+  pointerGhost=document.createElement('div');
+  pointerGhost.className='pointer-ghost';
+  document.body.appendChild(pointerGhost);
+  drawPiece(pointerGhost,shape,{fullSize:true});
+  const rect=pointerGhost.getBoundingClientRect();
+  const yOffset=Math.max(20, rect.height*0.2);
+  pointerGhostOffset={
+    x:rect.width/2,
+    y:rect.height + yOffset
+  };
+  return pointerGhost;
+}
+
+function updatePointerGhostPosition(e){
+  if(!pointerGhost) return;
+  const cx=typeof e.clientX==='number' ? e.clientX : 0;
+  const cy=typeof e.clientY==='number' ? e.clientY : 0;
+  pointerGhost.style.transform=`translate(${cx-pointerGhostOffset.x}px, ${cy-pointerGhostOffset.y}px)`;
+}
+
+function removePointerGhost(){
+  if(pointerGhost){
+    pointerGhost.remove();
+    pointerGhost=null;
+    pointerGhostOffset={x:0,y:0};
+  }
+}
+
 function renderTray(){
   trayEl.innerHTML='';
   tray.forEach((p,idx)=>{
@@ -490,10 +535,8 @@ function renderTray(){
     card.addEventListener('dragstart', e=>beginDrag(e,idx));
     card.addEventListener('dragend', finishDrag);
     trayEl.appendChild(card);
-    if(!isDraggingActive){
-      const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
-      drawPiece(inner,p.shape,{fullSize:isActive});
-    }
+    const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
+    drawPiece(inner,p.shape);
   });
 }
 
@@ -517,17 +560,20 @@ function startPointerDrag(e,idx){
   if(pointerCaptureTarget && pointerCaptureTarget.setPointerCapture){
     try{ pointerCaptureTarget.setPointerCapture(e.pointerId); }catch(err){}
   }
+  pointerGhost=createPointerGhost(tray[idx].shape);
   boardEl.classList.add('dragging');
   window.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', handlePointerUp);
   window.addEventListener('pointercancel', handlePointerCancel);
   updatePointerPreview(e);
+  updatePointerGhostPosition(e);
 }
 
 function handlePointerMove(e){
   if(e.pointerId!==pointerDragId) return;
   e.preventDefault();
   updatePointerPreview(e);
+  updatePointerGhostPosition(e);
 }
 
 function handlePointerUp(e){
@@ -656,6 +702,7 @@ function releaseDragUIState(){
   boardEl.classList.remove('dragging');
   draggingPiece=false;
   releasePointerCapture();
+  removePointerGhost();
   if(dragGhost){
     dragGhost.remove();
     dragGhost=null;
