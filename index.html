@@ -306,6 +306,7 @@ const MIN_TRAY_GAP=4;
 let grid, score=0, tray=[], selected=null;
 let boardCellSize=0, boardGap=8, isClearing=false;
 let pendingAnchor=null, pendingAnchorIdx=null;
+let pendingAnchorRect=null;
 let currentPreview=null;
 let draggingPiece=false;
 let resizeScheduled=false;
@@ -314,7 +315,7 @@ let pointerDragId=null;
 let pointerCaptureTarget=null;
 let dragGhost=null;
 let pointerGhost=null;
-let pointerGhostOffset={x:0,y:0};
+let pointerAnchorOffset={x:0,y:0};
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -499,27 +500,32 @@ function createPointerGhost(shape){
   pointerGhost.className='pointer-ghost';
   document.body.appendChild(pointerGhost);
   drawPiece(pointerGhost,shape,{fullSize:true});
-  const rect=pointerGhost.getBoundingClientRect();
-  const yOffset=Math.max(8, rect.height*0.1);
-  pointerGhostOffset={
-    x:rect.width/2,
-    y:rect.height/2 + yOffset
-  };
   return pointerGhost;
+}
+
+function getAnchorCenterOffsetPx(){
+  const anchor=getSelectedAnchor();
+  const cell=boardCellSize || 32;
+  const gap=boardGap || 6;
+  return {
+    x:(anchor.dx||0)*(cell+gap) + cell/2,
+    y:(anchor.dy||0)*(cell+gap) + cell/2
+  };
 }
 
 function updatePointerGhostPosition(e){
   if(!pointerGhost) return;
-  const cx=typeof e.clientX==='number' ? e.clientX : 0;
-  const cy=typeof e.clientY==='number' ? e.clientY : 0;
-  pointerGhost.style.transform=`translate(${cx-pointerGhostOffset.x}px, ${cy-pointerGhostOffset.y}px)`;
+  const anchorPoint=getAnchorPointFromEvent(e);
+  const offset=getAnchorCenterOffsetPx();
+  const left=anchorPoint.x - offset.x;
+  const top=anchorPoint.y - offset.y;
+  pointerGhost.style.transform=`translate(${left}px, ${top}px)`;
 }
 
 function removePointerGhost(){
   if(pointerGhost){
     pointerGhost.remove();
     pointerGhost=null;
-    pointerGhostOffset={x:0,y:0};
   }
 }
 
@@ -542,6 +548,7 @@ function renderTray(){
 
 function handlePiecePointerDown(e,idx){
   rememberAnchor(e,idx);
+  capturePointerAnchorOffset(e);
   if(e.pointerType==='mouse' || e.pointerType==='pen'){
     return;
   }
@@ -589,7 +596,8 @@ function handlePointerCancel(e){
 }
 
 function updatePointerPreview(e){
-  const cell=getCellFromPoint(e);
+  const anchorPoint=getAnchorPointFromEvent(e);
+  const cell=getCellFromCoords(anchorPoint.x, anchorPoint.y);
   if(cell){
     showPreviewAt(+cell.dataset.x, +cell.dataset.y);
   }else{
@@ -599,9 +607,9 @@ function updatePointerPreview(e){
 
 function finalizePointerDrag(e){
   cleanupPointerDragListeners();
-  const pointerId=pointerDragId;
   pointerDragId=null;
-  const cell=getCellFromPoint(e);
+  const anchorPoint=getAnchorPointFromEvent(e);
+  const cell=getCellFromCoords(anchorPoint.x, anchorPoint.y);
   let placed=false;
   if(cell){
     placed=attemptPlacement(+cell.dataset.x, +cell.dataset.y);
@@ -646,6 +654,7 @@ function rememberAnchor(e,idx){
   if(tile){
     pendingAnchor={dx:+tile.dataset.cx, dy:+tile.dataset.cy};
     pendingAnchorIdx=idx;
+    pendingAnchorRect=tile.getBoundingClientRect();
   }else{
     clearPendingAnchor();
   }
@@ -654,6 +663,7 @@ function rememberAnchor(e,idx){
 function clearPendingAnchor(){
   pendingAnchor=null;
   pendingAnchorIdx=null;
+  pendingAnchorRect=null;
 }
 
 function takeAnchorFromDrag(e,idx){
@@ -671,6 +681,39 @@ function anchorFromPointer(e){
     return {dx:+tile.dataset.cx, dy:+tile.dataset.cy};
   }
   return null;
+}
+
+function capturePointerAnchorOffset(e){
+  if(e && pendingAnchorRect){
+    const cx=typeof e.clientX==='number' ? e.clientX : 0;
+    const cy=typeof e.clientY==='number' ? e.clientY : 0;
+    const centerX=pendingAnchorRect.left + pendingAnchorRect.width/2;
+    const centerY=pendingAnchorRect.top + pendingAnchorRect.height/2;
+    pointerAnchorOffset={
+      x:cx-centerX,
+      y:cy-centerY
+    };
+  }else{
+    pointerAnchorOffset={x:0,y:0};
+  }
+}
+
+function getAnchorPointFromEvent(e){
+  const baseX=typeof e.clientX==='number' ? e.clientX : 0;
+  const baseY=typeof e.clientY==='number' ? e.clientY : 0;
+  const lift=Math.max(6, boardCellSize ? boardCellSize*0.25 : 12);
+  return {
+    x:baseX - pointerAnchorOffset.x,
+    y:baseY - pointerAnchorOffset.y - lift
+  };
+}
+
+function getCellFromCoords(x,y){
+  if(!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const clampedX=Math.max(0, Math.min(window.innerWidth-1, x));
+  const clampedY=Math.max(0, Math.min(window.innerHeight-1, y));
+  const el=document.elementFromPoint(clampedX, clampedY);
+  return el && el.closest('.cell');
 }
 
 function beginDrag(e,idx){
@@ -703,6 +746,7 @@ function releaseDragUIState(){
   draggingPiece=false;
   releasePointerCapture();
   removePointerGhost();
+  pointerAnchorOffset={x:0,y:0};
   if(dragGhost){
     dragGhost.remove();
     dragGhost=null;
