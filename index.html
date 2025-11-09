@@ -53,6 +53,19 @@
     padding:20px clamp(12px,4vw,24px) 24px;
     min-height:100vh;
     min-height:100dvh;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+  .wrap,
+  .board,
+  .tray,
+  .piece,
+  .piece-inner,
+  .topbar{
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
   }
 
   .topbar{
@@ -208,18 +221,25 @@
     align-items:center;
     justify-content:center;
     min-height:120px;
-  }
-  .piece.picked{
-    visibility:hidden;
-    pointer-events:none;
+    overflow:visible;
   }
   .piece:active{cursor:grabbing}
   .piece.selected{ transform:scale(1.03); }
+  .piece.dragging{
+    visibility:hidden;
+  }
   .piece-inner{
     display:grid;
     gap:var(--grid-gap);
     justify-items:stretch;
     align-items:stretch;
+  }
+  .drag-ghost{
+    position:fixed;
+    top:-9999px;
+    left:-9999px;
+    pointer-events:none;
+    z-index:0;
   }
 
   .b{
@@ -277,6 +297,9 @@ let currentPreview=null;
 let draggingPiece=false;
 let resizeScheduled=false;
 let currentBoardPixels=0;
+let pointerDragId=null;
+let pointerCaptureTarget=null;
+let dragGhost=null;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -430,8 +453,9 @@ function drawPiece(container,shape,{fullSize=false}={}){
   container.style.gridTemplateColumns=`repeat(${w}, ${cellSize}px)`;
   container.style.gridTemplateRows=`repeat(${h}, ${cellSize}px)`;
   container.style.gap=gap+'px';
-  if(container.parentElement){
-    container.parentElement.style.minHeight=(height+20)+'px';
+  const parentEl=container.parentElement;
+  if(parentEl && parentEl!==document.body){
+    parentEl.style.minHeight=(height+20)+'px';
   }
   shape.forEach(([x,y])=>{
     const b=document.createElement('div'); b.className='b';
@@ -443,23 +467,132 @@ function drawPiece(container,shape,{fullSize=false}={}){
   });
 }
 
+function createDragGhost(shape){
+  const ghost=document.createElement('div');
+  ghost.className='drag-ghost';
+  ghost.style.padding='0';
+  ghost.style.margin='0';
+  ghost.style.background='transparent';
+  document.body.appendChild(ghost);
+  drawPiece(ghost,shape,{fullSize:true});
+  return ghost;
+}
+
 function renderTray(){
   trayEl.innerHTML='';
   tray.forEach((p,idx)=>{
     const card=document.createElement('div');
     const isActive=selected && selected.idx===idx;
-    const isPicked=isActive && draggingPiece;
-    card.className='piece'+(isActive?' selected':'')+(isPicked?' picked':'');
+    const isDraggingActive=isActive && draggingPiece;
+    card.className='piece'+(isActive?' selected':'')+(isDraggingActive?' dragging':'');
     card.setAttribute('draggable','true');
-    card.addEventListener('pointerdown', e=>rememberAnchor(e,idx));
+    card.addEventListener('pointerdown', e=>handlePiecePointerDown(e,idx));
     card.addEventListener('dragstart', e=>beginDrag(e,idx));
     card.addEventListener('dragend', finishDrag);
-    const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
     trayEl.appendChild(card);
-    if(!isPicked){
+    if(!isDraggingActive){
+      const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
       drawPiece(inner,p.shape,{fullSize:isActive});
     }
   });
+}
+
+function handlePiecePointerDown(e,idx){
+  rememberAnchor(e,idx);
+  if(e.pointerType==='mouse' || e.pointerType==='pen'){
+    return;
+  }
+  if(isClearing || draggingPiece) return;
+  e.preventDefault();
+  startPointerDrag(e,idx);
+}
+
+function startPointerDrag(e,idx){
+  const anchor = takeAnchorFromDrag(e,idx);
+  selected={shape:tray[idx].shape, idx, anchor};
+  setTimeout(()=>renderTray(),0);
+  draggingPiece=true;
+  pointerDragId=e.pointerId;
+  pointerCaptureTarget=e.currentTarget;
+  if(pointerCaptureTarget && pointerCaptureTarget.setPointerCapture){
+    try{ pointerCaptureTarget.setPointerCapture(e.pointerId); }catch(err){}
+  }
+  boardEl.classList.add('dragging');
+  window.addEventListener('pointermove', handlePointerMove);
+  window.addEventListener('pointerup', handlePointerUp);
+  window.addEventListener('pointercancel', handlePointerCancel);
+  updatePointerPreview(e);
+}
+
+function handlePointerMove(e){
+  if(e.pointerId!==pointerDragId) return;
+  e.preventDefault();
+  updatePointerPreview(e);
+}
+
+function handlePointerUp(e){
+  if(e.pointerId!==pointerDragId) return;
+  e.preventDefault();
+  finalizePointerDrag(e);
+}
+
+function handlePointerCancel(e){
+  if(e.pointerId!==pointerDragId) return;
+  e.preventDefault();
+  cancelPointerDrag();
+}
+
+function updatePointerPreview(e){
+  const cell=getCellFromPoint(e);
+  if(cell){
+    showPreviewAt(+cell.dataset.x, +cell.dataset.y);
+  }else{
+    clearPreviewAll();
+  }
+}
+
+function finalizePointerDrag(e){
+  cleanupPointerDragListeners();
+  const pointerId=pointerDragId;
+  pointerDragId=null;
+  const cell=getCellFromPoint(e);
+  let placed=false;
+  if(cell){
+    placed=attemptPlacement(+cell.dataset.x, +cell.dataset.y);
+  }else if(currentPreview && currentPreview.origin){
+    placed=attemptPlacement(null,null,currentPreview.origin);
+  }
+  if(!placed){
+    finishDrag();
+  }else{
+    releaseDragUIState();
+  }
+}
+
+function cancelPointerDrag(){
+  cleanupPointerDragListeners();
+  pointerDragId=null;
+  finishDrag();
+}
+
+function cleanupPointerDragListeners(){
+  window.removeEventListener('pointermove', handlePointerMove);
+  window.removeEventListener('pointerup', handlePointerUp);
+  window.removeEventListener('pointercancel', handlePointerCancel);
+  releasePointerCapture();
+}
+
+function releasePointerCapture(){
+  if(pointerCaptureTarget && pointerCaptureTarget.releasePointerCapture && pointerDragId!=null){
+    try{ pointerCaptureTarget.releasePointerCapture(pointerDragId); }catch(err){}
+  }
+  pointerCaptureTarget=null;
+}
+
+function getCellFromPoint(e){
+  if(typeof e.clientX!=='number' || typeof e.clientY!=='number') return null;
+  const el=document.elementFromPoint(e.clientX, e.clientY);
+  return el && el.closest('.cell');
 }
 
 function rememberAnchor(e,idx){
@@ -498,21 +631,35 @@ function beginDrag(e,idx){
   if(isClearing){ e.preventDefault(); return; }
   const anchor = takeAnchorFromDrag(e,idx);
   selected={shape:tray[idx].shape, idx, anchor};
+  dragGhost=createDragGhost(tray[idx].shape);
   setTimeout(()=>renderTray(),0);
   draggingPiece=true;
   boardEl.classList.add('dragging');
   if(e.dataTransfer){
+    if(dragGhost){
+      const rect=dragGhost.getBoundingClientRect();
+      e.dataTransfer.setDragImage(dragGhost, rect.width/2, rect.height/2);
+    }
     e.dataTransfer.effectAllowed='move';
     e.dataTransfer.setData('text/plain', String(idx));
   }
 }
 
 function finishDrag(){
-  boardEl.classList.remove('dragging');
-  draggingPiece=false;
+  releaseDragUIState();
   clearPreviewAll();
   selected=null;
   renderTray();
+}
+
+function releaseDragUIState(){
+  boardEl.classList.remove('dragging');
+  draggingPiece=false;
+  releasePointerCapture();
+  if(dragGhost){
+    dragGhost.remove();
+    dragGhost=null;
+  }
 }
 
 function updateBoardCells(){
