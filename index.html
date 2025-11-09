@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F4F1EB" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 <title>1010 — Minimal</title>
 <style>
   :root{
@@ -179,24 +184,34 @@
   @keyframes shake{0%{transform:translateX(0)}33%{transform:translateX(-4px)}66%{transform:translateX(4px)}100%{transform:translateX(0)}}
 
   .tray{
-    width:100%;
+    width:min(100%, var(--board-size, 100%));
+    max-width:var(--max-width);
+    margin:0 auto;
     display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:var(--piece-gap,26px);
-    flex-wrap:nowrap;
+    align-items:stretch;
+    justify-content:space-between;
+    gap:var(--piece-gap, clamp(8px, 2vw, 18px));
     overflow:visible;
   }
   .piece{
-    flex:0 0 auto;
+    flex:1 1 0;
+    min-width:0;
     background:transparent;
     border:none;
-    border-radius:14px;
-    padding:8px 0;
+    border-radius:16px;
+    padding:12px 0;
     cursor:grab;
     box-shadow:none;
     transition:transform .2s ease;
     touch-action:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:120px;
+  }
+  .piece.picked{
+    visibility:hidden;
+    pointer-events:none;
   }
   .piece:active{cursor:grabbing}
   .piece.selected{ transform:scale(1.03); }
@@ -250,8 +265,11 @@
 
 <script>
 /* ------- Minimal 1010 (drag-and-drop) ------- */
-const BOARD=10, EMPTY=0, FILLED=1, PIECE_GAP=8;
+const BOARD=10, EMPTY=0, FILLED=1;
 const CLEAR_DELAY_STEP_MS=50;
+const TRAY_SCALE=0.74;
+const MIN_TRAY_CELL=18;
+const MIN_TRAY_GAP=4;
 let grid, score=0, tray=[], selected=null;
 let boardCellSize=0, boardGap=8, isClearing=false;
 let pendingAnchor=null, pendingAnchorIdx=null;
@@ -375,7 +393,6 @@ function buildBoard(){
     d.dataset.y=Math.floor(i/BOARD);
     d.addEventListener('pointerenter', previewHover);
     d.addEventListener('pointerleave', ()=>{ if(selected && !draggingPiece) clearPreviewAll(); });
-    d.addEventListener('click', tryPlaceHere);
     d.addEventListener('dragover', handleDragOver);
     d.addEventListener('drop', handleDrop);
     boardEl.appendChild(d);
@@ -395,21 +412,27 @@ function refillTray(){
   renderTray();
 }
 
-function drawPiece(container,shape){
+function drawPiece(container,shape,{fullSize=false}={}){
   container.innerHTML='';
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
-  const gap=boardGap;
-  const width=(w*boardCellSize)+Math.max(0,w-1)*gap;
-  const height=(h*boardCellSize)+Math.max(0,h-1)*gap;
+  const baseCell=boardCellSize || 32;
+  const baseGap=boardGap || 6;
+  const miniCell=Math.max(MIN_TRAY_CELL, Math.round(baseCell*TRAY_SCALE));
+  const miniGap=Math.max(MIN_TRAY_GAP, Math.round(baseGap*TRAY_SCALE));
+  const cellSize=fullSize ? baseCell : miniCell;
+  const gap=fullSize ? baseGap : miniGap;
+  const width=(w*cellSize)+Math.max(0,w-1)*gap;
+  const height=(h*cellSize)+Math.max(0,h-1)*gap;
   container.style.display='grid';
   container.style.width=width+'px';
   container.style.height=height+'px';
-  container.style.gridTemplateColumns=`repeat(${w}, ${boardCellSize}px)`;
-  container.style.gridTemplateRows=`repeat(${h}, ${boardCellSize}px)`;
+  container.style.gridTemplateColumns=`repeat(${w}, ${cellSize}px)`;
+  container.style.gridTemplateRows=`repeat(${h}, ${cellSize}px)`;
   container.style.gap=gap+'px';
-  container.parentElement.style.width=(width+12)+'px';
-  container.parentElement.style.height=(height+12)+'px';
+  if(container.parentElement){
+    container.parentElement.style.minHeight=(height+20)+'px';
+  }
   shape.forEach(([x,y])=>{
     const b=document.createElement('div'); b.className='b';
     b.dataset.cx=x;
@@ -425,15 +448,17 @@ function renderTray(){
   tray.forEach((p,idx)=>{
     const card=document.createElement('div');
     const isActive=selected && selected.idx===idx;
-    card.className='piece'+(isActive?' selected':'');
+    const isPicked=isActive && draggingPiece;
+    card.className='piece'+(isActive?' selected':'')+(isPicked?' picked':'');
     card.setAttribute('draggable','true');
     card.addEventListener('pointerdown', e=>rememberAnchor(e,idx));
-    card.addEventListener('click', ()=>handlePieceClick(idx));
     card.addEventListener('dragstart', e=>beginDrag(e,idx));
     card.addEventListener('dragend', finishDrag);
     const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
     trayEl.appendChild(card);
-    drawPiece(inner,p.shape);
+    if(!isPicked){
+      drawPiece(inner,p.shape,{fullSize:isActive});
+    }
   });
 }
 
@@ -469,21 +494,11 @@ function anchorFromPointer(e){
   return null;
 }
 
-function handlePieceClick(idx){
-  clearPendingAnchor();
-  if(selected && selected.idx===idx){
-    selected=null;
-  }else{
-    selected={shape:tray[idx].shape, idx, anchor:ZERO_ANCHOR()};
-  }
-  clearPreviewAll();
-  renderTray();
-}
-
 function beginDrag(e,idx){
   if(isClearing){ e.preventDefault(); return; }
   const anchor = takeAnchorFromDrag(e,idx);
   selected={shape:tray[idx].shape, idx, anchor};
+  setTimeout(()=>renderTray(),0);
   draggingPiece=true;
   boardEl.classList.add('dragging');
   if(e.dataTransfer){
@@ -496,7 +511,7 @@ function finishDrag(){
   boardEl.classList.remove('dragging');
   draggingPiece=false;
   clearPreviewAll();
-  if(selected) selected.anchor=ZERO_ANCHOR();
+  selected=null;
   renderTray();
 }
 
@@ -644,10 +659,6 @@ function handleBoardDrop(e){
   }
 }
 
-function tryPlaceHere(e){
-  attemptPlacement(+e.currentTarget.dataset.x, +e.currentTarget.dataset.y);
-}
-
 function attemptPlacement(x,y,originOverride=null){
   if(!selected) return false;
   if(isClearing){ bumpBoard(); return false; }
@@ -703,6 +714,14 @@ start();
 
 window.addEventListener('resize', scheduleResponsiveSize);
 window.addEventListener('orientationchange', scheduleResponsiveSize);
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>{
+      console.warn('Service worker registration failed', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
