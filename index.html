@@ -12,6 +12,15 @@
     --block:#57606A;
     --text:#8A8172;
     --shadow:0 14px 45px rgba(39,36,29,.12);
+    --max-width:520px;
+    --board-size:520px;
+    --cell-radius:10px;
+    --pip-radius:8px;
+    --grid-gap:8px;
+  }
+  @media (max-height: 760px){
+    body{ gap:clamp(12px,3vh,18px); padding-top:16px; padding-bottom:16px; }
+    .wrap{ gap:clamp(12px,3vh,20px); }
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -36,25 +45,26 @@
     align-items:center;
     justify-content:flex-start;
     gap:24px;
-    padding:32px 18px 48px;
+    padding:20px clamp(12px,4vw,24px) 24px;
     min-height:100vh;
+    min-height:100dvh;
   }
 
   .topbar{
-    width:100%;
-    max-width:520px;
+    width:min(100%, var(--board-size, 100%));
+    max-width:var(--max-width);
+    position:relative;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    padding:14px 26px;
+    justify-content:center;
+    padding:clamp(10px,3vw,14px) clamp(18px,4vw,26px);
     border-radius:999px;
     border:1px solid rgba(0,0,0,.04);
     background:rgba(255,255,255,.75);
     backdrop-filter:blur(18px);
     box-shadow:0 10px 30px rgba(0,0,0,.08);
-    font-size:20px;
+    font-size:clamp(16px,4vw,20px);
     letter-spacing:.2px;
-    gap:16px;
     color:var(--text);
   }
   @media (prefers-color-scheme: dark){
@@ -68,7 +78,7 @@
     background:transparent;
     border:none;
     font-weight:600;
-    font-size:20px;
+    font-size:clamp(16px,4vw,20px);
     color:var(--text);
     cursor:pointer;
     padding:0;
@@ -76,29 +86,53 @@
   .btn:active{opacity:.7}
   .score{
     font-weight:700;
-    font-size:32px;
+    font-size:clamp(26px,6vw,32px);
     letter-spacing:.4px;
     color:var(--text);
   }
+  .icon-btn{
+    position:absolute;
+    right:clamp(12px,4vw,20px);
+    top:50%;
+    transform:translateY(-50%);
+    width:clamp(38px,10vw,44px);
+    height:clamp(38px,10vw,44px);
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 6px 16px rgba(0,0,0,.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .icon-btn svg{
+    width:clamp(18px,5vw,22px);
+    height:clamp(18px,5vw,22px);
+    stroke:currentColor;
+  }
+  .icon-btn:active{opacity:.8}
 
   .wrap{
     width:100%;
-    max-width:520px;
+    max-width:var(--max-width);
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:28px;
+    gap:clamp(16px,4vw,28px);
   }
 
   .board{
-    width:100%;
+    width:min(100%, var(--board-size, 100%));
+    max-width:var(--max-width);
     aspect-ratio:1/1;
     background:var(--board);
     display:grid;
     grid-template-columns:repeat(10,1fr);
     grid-template-rows:repeat(10,1fr);
-    gap:8px;
-    padding:16px;
+    gap:var(--grid-gap);
+    padding:clamp(8px,2.4vw,16px);
     border-radius:18px;
     box-shadow:none;
   }
@@ -109,7 +143,7 @@
     position:relative;
     overflow:hidden;
     background:var(--tile);
-    border-radius:10px;
+    border-radius:var(--cell-radius);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
     transition:transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
@@ -149,7 +183,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:26px;
+    gap:var(--piece-gap,26px);
     flex-wrap:nowrap;
     overflow:visible;
   }
@@ -162,12 +196,13 @@
     cursor:grab;
     box-shadow:none;
     transition:transform .2s ease;
+    touch-action:none;
   }
   .piece:active{cursor:grabbing}
   .piece.selected{ transform:scale(1.03); }
   .piece-inner{
     display:grid;
-    gap:8px;
+    gap:var(--grid-gap);
     justify-items:stretch;
     align-items:stretch;
   }
@@ -176,7 +211,7 @@
     width:100%;
     height:100%;
     background:var(--block);
-    border-radius:12px;
+    border-radius:var(--pip-radius);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
   }
 
@@ -189,9 +224,15 @@
 </head>
 <body>
   <div class="topbar">
-    <button class="btn" id="resetBtn">Reset</button>
     <div class="score" id="score">0</div>
-    <button class="btn" id="moreBtn">⋯</button>
+    <button class="icon-btn" id="resetBtn" aria-label="Reset game">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <path d="M3 4v6h6"></path>
+        <path d="M21 20v-6h-6"></path>
+        <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
+        <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
+      </svg>
+    </button>
   </div>
 
   <div class="wrap">
@@ -212,8 +253,12 @@
 const BOARD=10, EMPTY=0, FILLED=1, PIECE_GAP=8;
 const CLEAR_DELAY_STEP_MS=50;
 let grid, score=0, tray=[], selected=null;
-let boardCellSize=0, isClearing=false;
+let boardCellSize=0, boardGap=8, isClearing=false;
 let pendingAnchor=null, pendingAnchorIdx=null;
+let currentPreview=null;
+let draggingPiece=false;
+let resizeScheduled=false;
+let currentBoardPixels=0;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -235,7 +280,7 @@ function buildPlacementOffsets(shape){
 }
 
 function findPlacementOrigin(x,y){
-  if(!selected || !selected.shape) return null;
+  if(!selected || !selected.shape || !Number.isFinite(x) || !Number.isFinite(y)) return null;
   const shape=selected.shape;
   const offsets=buildPlacementOffsets(shape);
   for(const off of offsets){
@@ -245,8 +290,67 @@ function findPlacementOrigin(x,y){
   return null;
 }
 
+function computeBoardPixels(){
+  const rootStyles=getComputedStyle(document.documentElement);
+  const maxWidth=parseFloat(rootStyles.getPropertyValue('--max-width')) || 520;
+  const vw=Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+  const bodyStyles=getComputedStyle(document.body);
+  const horizontalPadding=parseFloat(bodyStyles.paddingLeft)+parseFloat(bodyStyles.paddingRight);
+  const verticalPadding=parseFloat(bodyStyles.paddingTop)+parseFloat(bodyStyles.paddingBottom);
+  const topbar=document.querySelector('.topbar');
+  const wrap=document.querySelector('.wrap');
+  const topHeight=topbar?topbar.offsetHeight:0;
+  const wrapGap=wrap?parseFloat(getComputedStyle(wrap).gap)||0:0;
+  const trayHeight=trayEl?trayEl.offsetHeight:0;
+  let availableWidth=Math.min(maxWidth, vw-horizontalPadding);
+  availableWidth=Math.max(180, availableWidth);
+  let availableHeight=window.innerHeight - (verticalPadding + topHeight + wrapGap + trayHeight + 40);
+  if(!Number.isFinite(availableHeight) || availableHeight<=0) availableHeight=availableWidth;
+  let size=Math.min(availableWidth, availableHeight);
+  return Math.max(180, size);
+}
+
+function applyBoardSize(){
+  const size=computeBoardPixels();
+  if(Math.abs(size-currentBoardPixels)<=1) return;
+  currentBoardPixels=size;
+  document.documentElement.style.setProperty('--board-size', size+'px');
+  window.requestAnimationFrame(()=>{ recomputeBoardMetrics(); });
+}
+
+function scheduleResponsiveSize(){
+  if(resizeScheduled) return;
+  resizeScheduled=true;
+  window.requestAnimationFrame(()=>{
+    resizeScheduled=false;
+    applyBoardSize();
+    setTimeout(applyBoardSize, 80);
+  });
+}
+
+function recomputeBoardMetrics(){
+  const someCell=boardEl.firstElementChild;
+  if(!someCell) return;
+  const newSize=Math.round(someCell.getBoundingClientRect().width);
+  if(!newSize || newSize===boardCellSize) return;
+  boardCellSize=newSize;
+  const gapPx=Math.max(2, Math.min(8, boardCellSize*0.08));
+  boardGap=gapPx;
+  document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
+  const trayGap=Math.max(12, gapPx*3);
+  trayEl.style.setProperty('--piece-gap', trayGap+'px');
+  const radius=Math.max(4, Math.min(12, boardCellSize*0.12));
+  document.documentElement.style.setProperty('--cell-radius', (radius+2)+'px');
+  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-1)+'px');
+  renderTray();
+}
+
 const SHAPES=[
-  [[0,0]], [[0,0],[1,0]], [[0,0],[1,0],[2,0]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
+  [[0,0]],
+  [[0,0],[1,0]], [[0,0],[0,1]],
+  [[0,0],[1,0],[2,0]], [[0,0],[0,1],[0,2]],
+  [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[0,2],[0,3]],
+  [[0,0],[1,0],[2,0],[3,0],[4,0]], [[0,0],[0,1],[0,2],[0,3],[0,4]],
   [[0,0],[1,0],[0,1],[1,1]],
   [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
   [[0,0],[0,1],[0,2],[1,2]],
@@ -270,7 +374,7 @@ function buildBoard(){
     d.dataset.x=(i%BOARD);
     d.dataset.y=Math.floor(i/BOARD);
     d.addEventListener('pointerenter', previewHover);
-    d.addEventListener('pointerleave', ()=>{ if(selected) clearPreviewAll(); });
+    d.addEventListener('pointerleave', ()=>{ if(selected && !draggingPiece) clearPreviewAll(); });
     d.addEventListener('click', tryPlaceHere);
     d.addEventListener('dragover', handleDragOver);
     d.addEventListener('drop', handleDrop);
@@ -278,6 +382,7 @@ function buildBoard(){
   }
   const someCell=boardEl.firstElementChild;
   boardCellSize=Math.round(someCell.getBoundingClientRect().width);
+  trayEl.style.setProperty('--piece-gap', boardCellSize<40 ? '16px' : '26px');
 }
 
 function newGrid(){ grid=Array.from({length:BOARD},()=>Array(BOARD).fill(EMPTY)); updateBoardCells(); }
@@ -294,16 +399,17 @@ function drawPiece(container,shape){
   container.innerHTML='';
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
-  const width=(w*boardCellSize)+Math.max(0,w-1)*PIECE_GAP;
-  const height=(h*boardCellSize)+Math.max(0,h-1)*PIECE_GAP;
+  const gap=boardGap;
+  const width=(w*boardCellSize)+Math.max(0,w-1)*gap;
+  const height=(h*boardCellSize)+Math.max(0,h-1)*gap;
   container.style.display='grid';
   container.style.width=width+'px';
   container.style.height=height+'px';
   container.style.gridTemplateColumns=`repeat(${w}, ${boardCellSize}px)`;
   container.style.gridTemplateRows=`repeat(${h}, ${boardCellSize}px)`;
-  container.style.gap=PIECE_GAP+'px';
-  container.parentElement.style.width=(width+18)+'px';
-  container.parentElement.style.height=(height+18)+'px';
+  container.style.gap=gap+'px';
+  container.parentElement.style.width=(width+12)+'px';
+  container.parentElement.style.height=(height+12)+'px';
   shape.forEach(([x,y])=>{
     const b=document.createElement('div'); b.className='b';
     b.dataset.cx=x;
@@ -378,6 +484,7 @@ function beginDrag(e,idx){
   if(isClearing){ e.preventDefault(); return; }
   const anchor = takeAnchorFromDrag(e,idx);
   selected={shape:tray[idx].shape, idx, anchor};
+  draggingPiece=true;
   boardEl.classList.add('dragging');
   if(e.dataTransfer){
     e.dataTransfer.effectAllowed='move';
@@ -387,6 +494,7 @@ function beginDrag(e,idx){
 
 function finishDrag(){
   boardEl.classList.remove('dragging');
+  draggingPiece=false;
   clearPreviewAll();
   if(selected) selected.anchor=ZERO_ANCHOR();
   renderTray();
@@ -472,19 +580,29 @@ function previewHover(e){
 
 function showPreviewAt(x,y){
   if(!selected) return;
-  clearPreviewAll();
   const origin=findPlacementOrigin(x,y);
+  clearPreviewAll();
   if(!origin) return;
   const {ox,oy}=origin;
   const shape=selected.shape;
+  const cells=[];
   shape.forEach(([dx,dy])=>{
     const cell=document.querySelector(`.cell[data-x="${ox+dx}"][data-y="${oy+dy}"]`);
-    if(cell) cell.classList.add('preview');
+    if(cell){
+      cell.classList.add('preview');
+      cells.push(cell);
+    }
   });
+  currentPreview={origin, cells};
 }
 
 function clearPreviewAll(){
-  document.querySelectorAll('.cell.preview').forEach(c=>c.classList.remove('preview'));
+  if(currentPreview && currentPreview.cells){
+    currentPreview.cells.forEach(cell=>cell.classList.remove('preview'));
+  }else{
+    document.querySelectorAll('.cell.preview').forEach(c=>c.classList.remove('preview'));
+  }
+  currentPreview=null;
 }
 
 function handleDragOver(e){
@@ -498,20 +616,48 @@ function handleDragOver(e){
 function handleDrop(e){
   if(!selected) return;
   e.preventDefault();
+  e.stopPropagation();
   const cell=e.currentTarget;
   attemptPlacement(+cell.dataset.x, +cell.dataset.y);
+}
+
+boardEl.addEventListener('dragover', handleBoardDragOver);
+boardEl.addEventListener('drop', handleBoardDrop);
+boardEl.addEventListener('pointerleave', ()=>{ if(!draggingPiece) clearPreviewAll(); });
+
+function handleBoardDragOver(e){
+  if(!selected) return;
+  e.preventDefault();
+  if(e.dataTransfer) e.dataTransfer.dropEffect='move';
+  const cell=e.target.closest('.cell');
+  if(cell) showPreviewAt(+cell.dataset.x, +cell.dataset.y);
+}
+
+function handleBoardDrop(e){
+  if(!selected) return;
+  e.preventDefault();
+  if(currentPreview && currentPreview.origin){
+    attemptPlacement(null,null,currentPreview.origin);
+  }else{
+    const cell=e.target.closest('.cell');
+    if(cell) attemptPlacement(+cell.dataset.x, +cell.dataset.y);
+  }
 }
 
 function tryPlaceHere(e){
   attemptPlacement(+e.currentTarget.dataset.x, +e.currentTarget.dataset.y);
 }
 
-function attemptPlacement(x,y){
+function attemptPlacement(x,y,originOverride=null){
   if(!selected) return false;
   if(isClearing){ bumpBoard(); return false; }
   const piece=selected.shape;
   const idx=selected.idx;
-  const origin=findPlacementOrigin(x,y);
+  let origin=originOverride;
+  if(!origin && Number.isFinite(x) && Number.isFinite(y)){
+    origin=findPlacementOrigin(x,y);
+  }
+  if(!origin && currentPreview) origin=currentPreview.origin;
   if(!origin){
     bumpBoard();
     return false;
@@ -551,8 +697,12 @@ function start(){
   clearPreviewAll();
   boardEl.classList.remove('dragging');
   buildBoard(); newGrid(); clearPendingAnchor(); refillTray();
+  scheduleResponsiveSize();
 }
 start();
+
+window.addEventListener('resize', scheduleResponsiveSize);
+window.addEventListener('orientationchange', scheduleResponsiveSize);
 </script>
 </body>
 </html>
