@@ -65,6 +65,7 @@
     user-select:none;
     -webkit-user-select:none;
     touch-action:manipulation;
+    -webkit-touch-callout:none;
   }
   .wrap,
   .board,
@@ -75,6 +76,7 @@
     user-select:none;
     -webkit-user-select:none;
     touch-action:none;
+    -webkit-touch-callout:none;
   }
 
   .topbar{
@@ -584,8 +586,6 @@ function loadSavedPalette(){
 
 buildPalettePanel();
 loadSavedPalette();
-const paletteBtn=document.getElementById('paletteBtn');
-const palettePanel=document.getElementById('palettePanel');
 
 function buildBoard(){
   boardEl.innerHTML='';
