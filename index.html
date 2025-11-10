@@ -173,7 +173,7 @@
     transition:transform .15s ease, background .2s ease, box-shadow .2s ease;
   }
   .cell.filled{
-    background:var(--block);
+    background:var(--cell-fill, var(--block));
     box-shadow:none;
   }
   .cell.preview{
@@ -379,18 +379,21 @@
 
 <script>
 /* ------- Minimal 1010 (drag-and-drop) ------- */
-const BOARD=10, EMPTY=0, FILLED=1;
+const BOARD=10, EMPTY=0;
 const CLEAR_DELAY_STEP_MS=50;
 const TRAY_SCALE=0.64;
 const MIN_TRAY_CELL=15;
 const MIN_TRAY_GAP=3;
 const STORAGE_KEYS={palette:'1010-palette'};
 const PALETTES=[
-  {id:'graphite', name:'Graphite', colors:['#5E5D5C']},
-  {id:'sandstone', name:'Sandstone', colors:['#8F7B65']},
-  {id:'sage', name:'Sage', colors:['#6F7F72']},
-  {id:'slate', name:'Slate', colors:['#4A535E']},
-  {id:'umber', name:'Umber', colors:['#6B4C3B']}
+  {id:'slate-mix', name:'Slate — Mix', colors:['#3E4349','#57606A','#9CA3AF'], mode:'mix'},
+  {id:'slate-single', name:'Slate — Single', colors:['#57606A'], mode:'single'},
+  {id:'blue-mix', name:'Blue — Mix', colors:['#2B3A55','#5E81AC','#BFD7EA'], mode:'mix'},
+  {id:'blue-single', name:'Blue — Single', colors:['#5E81AC'], mode:'single'},
+  {id:'sage-mix', name:'Sage — Mix', colors:['#495A4E','#7E8F83','#C9D4CA'], mode:'mix'},
+  {id:'sage-single', name:'Sage — Single', colors:['#7E8F83'], mode:'single'},
+  {id:'sand-mix', name:'Sand — Mix', colors:['#5C5346','#A89885','#D8CFC1'], mode:'mix'},
+  {id:'sand-single', name:'Sand — Single', colors:['#A89885'], mode:'single'}
 ];
 let grid, score=0, tray=new Array(3).fill(null), selected=null;
 let boardCellSize=0, boardGap=8, isClearing=false;
@@ -409,6 +412,29 @@ let palettePanelOpen=false;
 let currentPaletteId=PALETTES[0].id;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
+
+function getCurrentPalette(){
+  return PALETTES.find(p=>p.id===currentPaletteId) || PALETTES[0];
+}
+
+function pickPieceColor(){
+  const palette=getCurrentPalette();
+  if(!palette || !Array.isArray(palette.colors) || !palette.colors.length){
+    const fallback=getComputedStyle(document.documentElement).getPropertyValue('--block') || '#57606A';
+    return fallback.trim();
+  }
+  if(palette.mode==='single'){
+    return palette.colors[0];
+  }
+  const colors=palette.colors;
+  return colors[Math.floor(Math.random()*colors.length)];
+}
+
+function assignPieceColor(piece){
+  if(!piece) return piece;
+  piece.color=pickPieceColor();
+  return piece;
+}
 
 function getSelectedAnchor(){
   return (selected && selected.anchor) ? selected.anchor : ZERO_ANCHOR();
@@ -558,6 +584,10 @@ function applyPalette(id, persist=false){
   if(persist){
     try{ localStorage.setItem(STORAGE_KEYS.palette,currentPaletteId); }catch(err){}
   }
+  tray=tray.map(piece=>piece?assignPieceColor(piece):piece);
+  if(selected && typeof selected.idx==='number' && tray[selected.idx]){
+    selected.color=tray[selected.idx].color;
+  }
   updatePaletteSelection();
   updateBoardCells();
   renderTray();
@@ -608,7 +638,9 @@ function buildBoard(){
 }
 
 function newGrid(){ grid=Array.from({length:BOARD},()=>Array(BOARD).fill(EMPTY)); updateBoardCells(); }
-function dealPiece(){ return {shape: JSON.parse(JSON.stringify(SHAPES[Math.floor(Math.random()*SHAPES.length)]))}; }
+function dealPiece(){
+  return assignPieceColor({shape: JSON.parse(JSON.stringify(SHAPES[Math.floor(Math.random()*SHAPES.length)]))});
+}
 function refillTray(force=false){
   if(!Array.isArray(tray) || tray.length!==3){
     tray=new Array(3).fill(null);
@@ -625,7 +657,7 @@ function refillTray(force=false){
   renderTray();
 }
 
-function drawPiece(container,shape,{fullSize=false}={}){
+function drawPiece(container,shape,{fullSize=false,color=null}={}){
   container.innerHTML='';
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
@@ -635,6 +667,7 @@ function drawPiece(container,shape,{fullSize=false}={}){
   const miniGap=Math.max(MIN_TRAY_GAP, Math.round(baseGap*TRAY_SCALE));
   const cellSize=fullSize ? baseCell : miniCell;
   const gap=fullSize ? baseGap : miniGap;
+  const fillColor=(color || document.documentElement.style.getPropertyValue('--block') || getComputedStyle(document.documentElement).getPropertyValue('--block') || '#57606A').trim();
   const width=(w*cellSize)+Math.max(0,w-1)*gap;
   const height=(h*cellSize)+Math.max(0,h-1)*gap;
   container.style.display='grid';
@@ -653,27 +686,28 @@ function drawPiece(container,shape,{fullSize=false}={}){
     b.dataset.cy=y;
     b.style.gridColumn=(x+1);
     b.style.gridRow=(y+1);
+    b.style.background=fillColor;
     container.appendChild(b);
   });
 }
 
-function createDragGhost(shape){
+function createDragGhost(shape,color){
   const ghost=document.createElement('div');
   ghost.className='drag-ghost';
   ghost.style.padding='0';
   ghost.style.margin='0';
   ghost.style.background='transparent';
   document.body.appendChild(ghost);
-  drawPiece(ghost,shape,{fullSize:true});
+  drawPiece(ghost,shape,{fullSize:true,color});
   return ghost;
 }
 
-function createPointerGhost(shape){
+function createPointerGhost(shape,color){
   removePointerGhost();
   pointerGhost=document.createElement('div');
   pointerGhost.className='pointer-ghost';
   document.body.appendChild(pointerGhost);
-  drawPiece(pointerGhost,shape,{fullSize:true});
+  drawPiece(pointerGhost,shape,{fullSize:true,color});
   return pointerGhost;
 }
 
@@ -717,7 +751,7 @@ function renderTray(){
       card.addEventListener('dragstart', e=>beginDrag(e,idx));
       card.addEventListener('dragend', finishDrag);
       const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
-      drawPiece(inner,p.shape,{fullSize:isActive});
+      drawPiece(inner,p.shape,{fullSize:isActive,color:p.color});
     }else{
       card.setAttribute('aria-hidden','true');
     }
@@ -738,9 +772,10 @@ function handlePiecePointerDown(e,idx){
 }
 
 function startPointerDrag(e,idx){
-  if(!tray[idx]) return;
+  const piece=tray[idx];
+  if(!piece) return;
   const anchor = takeAnchorFromDrag(e,idx);
-  selected={shape:tray[idx].shape, idx, anchor};
+  selected={shape:piece.shape, idx, anchor, color:piece.color};
   setTimeout(()=>renderTray(),0);
   draggingPiece=true;
   pointerDragId=e.pointerId;
@@ -748,7 +783,7 @@ function startPointerDrag(e,idx){
   if(pointerCaptureTarget && pointerCaptureTarget.setPointerCapture){
     try{ pointerCaptureTarget.setPointerCapture(e.pointerId); }catch(err){}
   }
-  pointerGhost=createPointerGhost(tray[idx].shape);
+  pointerGhost=createPointerGhost(piece.shape,piece.color);
   boardEl.classList.add('dragging');
   window.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', handlePointerUp);
@@ -893,10 +928,11 @@ function getCellFromCoords(x,y){
 
 function beginDrag(e,idx){
   if(isClearing){ e.preventDefault(); return; }
-  if(!tray[idx]) return;
+  const piece=tray[idx];
+  if(!piece) return;
   const anchor = takeAnchorFromDrag(e,idx);
-  selected={shape:tray[idx].shape, idx, anchor};
-  dragGhost=createDragGhost(tray[idx].shape);
+  selected={shape:piece.shape, idx, anchor, color:piece.color};
+  dragGhost=createDragGhost(piece.shape,piece.color);
   setTimeout(()=>renderTray(),0);
   draggingPiece=true;
   boardEl.classList.add('dragging');
@@ -933,8 +969,19 @@ function updateBoardCells(){
   if(!grid) return;
   document.querySelectorAll('.cell').forEach(c=>{
     const x=+c.dataset.x, y=+c.dataset.y;
-    c.classList.toggle('filled', grid[y][x]===FILLED);
+    const cellValue=grid[y][x];
+    const isFilled = cellValue!==EMPTY;
+    c.classList.toggle('filled', isFilled);
     c.classList.remove('preview');
+    if(isFilled){
+      c.style.setProperty('--cell-fill', cellValue);
+      c.style.background=cellValue;
+      c.style.boxShadow='none';
+    }else{
+      c.style.removeProperty('--cell-fill');
+      c.style.background='';
+      c.style.boxShadow='';
+    }
   });
 }
 
@@ -945,8 +992,9 @@ function canPlaceAt(x,y,shape){
   });
 }
 
-function placeAt(x,y,shape){
-  shape.forEach(([dx,dy])=>{ grid[y+dy][x+dx]=FILLED; });
+function placeAt(x,y,shape,color=null){
+  const fillColor=color || pickPieceColor();
+  shape.forEach(([dx,dy])=>{ grid[y+dy][x+dx]=fillColor; });
   score += shape.length; scoreEl.textContent=score;
   updateBoardCells();
   clearLines();
@@ -954,10 +1002,10 @@ function placeAt(x,y,shape){
 
 function clearLines(){
   const rows=[], cols=[];
-  for(let y=0;y<BOARD;y++) if(grid[y].every(v=>v===FILLED)) rows.push(y);
+  for(let y=0;y<BOARD;y++) if(grid[y].every(v=>v!==EMPTY)) rows.push(y);
   for(let x=0;x<BOARD;x++){
     let ok=true;
-    for(let y=0;y<BOARD;y++) if(grid[y][x]!==FILLED){ ok=false; break; }
+    for(let y=0;y<BOARD;y++) if(grid[y][x]===EMPTY){ ok=false; break; }
     if(ok) cols.push(x);
   }
   if(!rows.length && !cols.length) return;
@@ -984,6 +1032,8 @@ function clearLines(){
     if(cell){
       cell.classList.remove('filled');
       cell.classList.remove('preview');
+      cell.style.background='';
+      cell.style.removeProperty('--cell-fill');
       const rowDelay = rowSet.has(cy) ? cx*delayStepSeconds : 0;
       const colDelay = colSet.has(cx) ? cy*delayStepSeconds : 0;
       const delay = Math.max(rowDelay, colDelay);
@@ -1089,7 +1139,7 @@ function attemptPlacement(x,y,originOverride=null){
     return false;
   }
   const {ox,oy}=origin;
-  placeAt(ox,oy,piece);
+  placeAt(ox,oy,piece, selected && selected.color ? selected.color : null);
   if(typeof idx==='number' && tray[idx]){
     tray[idx]=null;
   }
