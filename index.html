@@ -304,20 +304,20 @@
   .palette-option{
     display:flex;
     align-items:center;
-    gap:10px;
+    justify-content:flex-start;
+    gap:6px;
     padding:6px 8px;
     border-radius:10px;
     border:none;
     background:transparent;
     cursor:pointer;
-    font:500 14px/1.2 "Inter", system-ui;
-    color:var(--text);
   }
-  .palette-option:hover{background:rgba(0,0,0,.04);}
-  .palette-option.active{background:rgba(0,0,0,.06);}
+  .palette-option:hover{background:rgba(0,0,0,.05);}
+  .palette-option.active{background:rgba(0,0,0,.08);}
   .palette-swatch{
     display:flex;
     gap:4px;
+    align-items:center;
   }
   .palette-dot{
     width:18px;
@@ -549,6 +549,9 @@ function buildPalettePanel(){
     const btn=document.createElement('button');
     btn.className='palette-option';
     btn.dataset.palette=palette.id;
+    btn.type='button';
+    btn.title=palette.name;
+    btn.setAttribute('aria-label', palette.name);
     const swatch=document.createElement('div');
     swatch.className='palette-swatch';
     palette.colors.forEach(color=>{
@@ -557,10 +560,7 @@ function buildPalettePanel(){
       dot.style.background=color;
       swatch.appendChild(dot);
     });
-    const label=document.createElement('span');
-    label.textContent=palette.name;
     btn.appendChild(swatch);
-    btn.appendChild(label);
     btn.addEventListener('click',()=>{
       applyPalette(palette.id,true);
       closePalettePanel();
@@ -911,7 +911,9 @@ function capturePointerAnchorOffset(e){
 function getAnchorPointFromEvent(e){
   const baseX=typeof e.clientX==='number' ? e.clientX : 0;
   const baseY=typeof e.clientY==='number' ? e.clientY : 0;
-  const lift=Math.max(18, boardCellSize ? boardCellSize*0.55 : 22);
+  const cell=boardCellSize || 32;
+  const gap=boardGap || 6;
+  const lift=Math.max(cell+gap, 32);
   return {
     x:baseX - pointerAnchorOffset.x,
     y:baseY - pointerAnchorOffset.y - lift
