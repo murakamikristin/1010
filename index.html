@@ -36,6 +36,15 @@
       --text:#E0E3EA;
       --shadow:0 18px 40px rgba(0,0,0,.65);
     }
+    .topbar{
+      background:rgba(14,15,16,.85);
+      border-color:rgba(255,255,255,.08);
+      box-shadow:0 14px 40px rgba(0,0,0,.65);
+    }
+    .palette-panel{
+      background:rgba(14,15,16,.92);
+      border-color:rgba(255,255,255,.08);
+    }
   }
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -84,13 +93,6 @@
     font-size:clamp(16px,4vw,20px);
     letter-spacing:.2px;
     color:var(--text);
-  }
-  @media (prefers-color-scheme: dark){
-    .topbar{
-      background:rgba(14,15,16,.85);
-      border-color:rgba(255,255,255,.08);
-      box-shadow:0 14px 40px rgba(0,0,0,.65);
-    }
   }
   .btn{
     background:transparent;
@@ -170,7 +172,7 @@
     box-shadow:none;
   }
   .cell.preview{
-    box-shadow:0 0 0 3px rgba(87,96,106,.35) inset;
+    box-shadow:none;
   }
   .cell.clearing{
     animation:clearSentinel .35s ease forwards;
@@ -193,9 +195,6 @@
     0%{transform:scale(1);opacity:1;}
     100%{transform:translateY(-10px);opacity:0;}
   }
-  .board.shake{animation:shake .15s}
-  @keyframes shake{0%{transform:translateX(0)}33%{transform:translateX(-4px)}66%{transform:translateX(4px)}100%{transform:translateX(0)}}
-
   .tray{
     width:min(100%, var(--board-size, 100%));
     max-width:var(--max-width);
@@ -228,6 +227,10 @@
   .piece.dragging{
     visibility:hidden;
   }
+  .piece.empty{
+    visibility:hidden;
+    pointer-events:none;
+  }
   .drag-ghost,
   .pointer-ghost{
     position:fixed;
@@ -255,6 +258,69 @@
     z-index:0;
   }
 
+  .palette-btn{
+    position:absolute;
+    left:clamp(12px,4vw,20px);
+    top:50%;
+    transform:translateY(-50%);
+    width:clamp(38px,10vw,44px);
+    height:clamp(38px,10vw,44px);
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 6px 16px rgba(0,0,0,.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .palette-btn svg{
+    width:clamp(18px,5vw,22px);
+    height:clamp(18px,5vw,22px);
+    stroke:currentColor;
+  }
+  .palette-btn:active{opacity:.8}
+  .palette-panel{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:clamp(12px,4vw,20px);
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    background:rgba(255,255,255,.92);
+    border-radius:14px;
+    padding:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    border:1px solid rgba(0,0,0,.04);
+    z-index:20;
+  }
+  .palette-panel.show{display:flex;}
+  .palette-option{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 8px;
+    border-radius:10px;
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    font:500 14px/1.2 "Inter", system-ui;
+    color:var(--text);
+  }
+  .palette-option:hover{background:rgba(0,0,0,.04);}
+  .palette-option.active{background:rgba(0,0,0,.06);}
+  .palette-swatch{
+    display:flex;
+    gap:4px;
+  }
+  .palette-dot{
+    width:18px;
+    height:18px;
+    border-radius:6px;
+    border:1px solid rgba(0,0,0,.1);
+  }
+
   .b{
     width:100%;
     height:100%;
@@ -272,6 +338,15 @@
 </head>
 <body>
   <div class="topbar">
+    <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <path d="M12 3c-4.97 0-9 3.395-9 8s4.03 8 9 8c.955 0 1.836-.093 2.632-.265 1.125-.246 1.868.915 1.368 1.965-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.605-4.03-7-9-7Z" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="7.5" cy="10.5" r="1.2"/>
+        <circle cx="12" cy="7.5" r="1.2"/>
+        <circle cx="16.5" cy="10.5" r="1.2"/>
+        <circle cx="14.5" cy="15" r="1.2"/>
+      </svg>
+    </button>
     <div class="score" id="score">0</div>
     <button class="icon-btn" id="resetBtn" aria-label="Reset game">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
@@ -281,6 +356,7 @@
         <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
       </svg>
     </button>
+    <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
   </div>
 
   <div class="wrap">
@@ -303,7 +379,15 @@ const CLEAR_DELAY_STEP_MS=50;
 const TRAY_SCALE=0.64;
 const MIN_TRAY_CELL=15;
 const MIN_TRAY_GAP=3;
-let grid, score=0, tray=[], selected=null;
+const STORAGE_KEYS={palette:'1010-palette'};
+const PALETTES=[
+  {id:'graphite', name:'Graphite', colors:['#5E5D5C']},
+  {id:'sandstone', name:'Sandstone', colors:['#8F7B65']},
+  {id:'sage', name:'Sage', colors:['#6F7F72']},
+  {id:'slate', name:'Slate', colors:['#4A535E']},
+  {id:'umber', name:'Umber', colors:['#6B4C3B']}
+];
+let grid, score=0, tray=new Array(3).fill(null), selected=null;
 let boardCellSize=0, boardGap=8, isClearing=false;
 let pendingAnchor=null, pendingAnchorIdx=null;
 let pendingAnchorRect=null;
@@ -316,6 +400,8 @@ let pointerCaptureTarget=null;
 let dragGhost=null;
 let pointerGhost=null;
 let pointerAnchorOffset={x:0,y:0};
+let palettePanelOpen=false;
+let currentPaletteId=PALETTES[0].id;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -422,6 +508,84 @@ const trayEl=document.getElementById('tray');
 const scoreEl=document.getElementById('score');
 const gameOverEl=document.getElementById('gameOver');
 const finalScoreEl=document.getElementById('finalScore');
+const paletteBtn=document.getElementById('paletteBtn');
+const palettePanel=document.getElementById('palettePanel');
+
+function buildPalettePanel(){
+  if(!palettePanel) return;
+  palettePanel.innerHTML='';
+  PALETTES.forEach(palette=>{
+    const btn=document.createElement('button');
+    btn.className='palette-option';
+    btn.dataset.palette=palette.id;
+    const swatch=document.createElement('div');
+    swatch.className='palette-swatch';
+    palette.colors.forEach(color=>{
+      const dot=document.createElement('span');
+      dot.className='palette-dot';
+      dot.style.background=color;
+      swatch.appendChild(dot);
+    });
+    const label=document.createElement('span');
+    label.textContent=palette.name;
+    btn.appendChild(swatch);
+    btn.appendChild(label);
+    btn.addEventListener('click',()=>{
+      applyPalette(palette.id,true);
+      closePalettePanel();
+    });
+    palettePanel.appendChild(btn);
+  });
+  updatePaletteSelection();
+}
+
+function updatePaletteSelection(){
+  if(!palettePanel) return;
+  palettePanel.querySelectorAll('.palette-option').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.palette===currentPaletteId);
+  });
+}
+
+function applyPalette(id, persist=false){
+  const palette=PALETTES.find(p=>p.id===id) || PALETTES[0];
+  currentPaletteId=palette.id;
+  document.documentElement.style.setProperty('--block', palette.colors[0]);
+  if(persist){
+    try{ localStorage.setItem(STORAGE_KEYS.palette,currentPaletteId); }catch(err){}
+  }
+  updatePaletteSelection();
+  updateBoardCells();
+  renderTray();
+}
+
+function togglePalettePanel(){
+  palettePanelOpen=!palettePanelOpen;
+  if(palettePanel){
+    palettePanel.classList.toggle('show', palettePanelOpen);
+  }
+}
+
+function closePalettePanel(){
+  palettePanelOpen=false;
+  if(palettePanel){
+    palettePanel.classList.remove('show');
+  }
+}
+
+function loadSavedPalette(){
+  let saved=null;
+  try{
+    saved=localStorage.getItem(STORAGE_KEYS.palette);
+  }catch(err){
+    saved=null;
+  }
+  applyPalette(saved || currentPaletteId, false);
+}
+
+buildPalettePanel();
+loadSavedPalette();
+const paletteBtn=document.getElementById('paletteBtn');
+const palettePanel=document.getElementById('palettePanel');
 
 function buildBoard(){
   boardEl.innerHTML='';
@@ -438,13 +602,20 @@ function buildBoard(){
   }
   const someCell=boardEl.firstElementChild;
   boardCellSize=Math.round(someCell.getBoundingClientRect().width);
-  trayEl.style.setProperty('--piece-gap', boardCellSize<40 ? '16px' : '26px');
 }
 
 function newGrid(){ grid=Array.from({length:BOARD},()=>Array(BOARD).fill(EMPTY)); updateBoardCells(); }
 function dealPiece(){ return {shape: JSON.parse(JSON.stringify(SHAPES[Math.floor(Math.random()*SHAPES.length)]))}; }
-function refillTray(){
-  tray=[dealPiece(),dealPiece(),dealPiece()];
+function refillTray(force=false){
+  if(!Array.isArray(tray) || tray.length!==3){
+    tray=new Array(3).fill(null);
+  }
+  const needsRefill = force || tray.every(slot=>!slot);
+  if(needsRefill){
+    for(let i=0;i<tray.length;i++){
+      tray[i]=dealPiece();
+    }
+  }
   selected=null;
   clearPreviewAll();
   clearPendingAnchor();
@@ -533,20 +704,26 @@ function renderTray(){
   trayEl.innerHTML='';
   tray.forEach((p,idx)=>{
     const card=document.createElement('div');
-    const isActive=selected && selected.idx===idx;
+    const hasPiece=!!p;
+    const isActive=hasPiece && selected && selected.idx===idx;
     const isDraggingActive=isActive && draggingPiece;
-    card.className='piece'+(isActive?' selected':'')+(isDraggingActive?' dragging':'');
-    card.setAttribute('draggable','true');
-    card.addEventListener('pointerdown', e=>handlePiecePointerDown(e,idx));
-    card.addEventListener('dragstart', e=>beginDrag(e,idx));
-    card.addEventListener('dragend', finishDrag);
+    card.className='piece'+(isActive?' selected':'')+(isDraggingActive?' dragging':'')+(hasPiece?'':' empty');
+    if(hasPiece){
+      card.setAttribute('draggable','true');
+      card.addEventListener('pointerdown', e=>handlePiecePointerDown(e,idx));
+      card.addEventListener('dragstart', e=>beginDrag(e,idx));
+      card.addEventListener('dragend', finishDrag);
+      const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
+      drawPiece(inner,p.shape,{fullSize:isActive});
+    }else{
+      card.setAttribute('aria-hidden','true');
+    }
     trayEl.appendChild(card);
-    const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
-    drawPiece(inner,p.shape);
   });
 }
 
 function handlePiecePointerDown(e,idx){
+  if(!tray[idx]) return;
   rememberAnchor(e,idx);
   capturePointerAnchorOffset(e);
   if(e.pointerType==='mouse' || e.pointerType==='pen'){
@@ -558,6 +735,7 @@ function handlePiecePointerDown(e,idx){
 }
 
 function startPointerDrag(e,idx){
+  if(!tray[idx]) return;
   const anchor = takeAnchorFromDrag(e,idx);
   selected={shape:tray[idx].shape, idx, anchor};
   setTimeout(()=>renderTray(),0);
@@ -643,12 +821,6 @@ function releasePointerCapture(){
   pointerCaptureTarget=null;
 }
 
-function getCellFromPoint(e){
-  if(typeof e.clientX!=='number' || typeof e.clientY!=='number') return null;
-  const el=document.elementFromPoint(e.clientX, e.clientY);
-  return el && el.closest('.cell');
-}
-
 function rememberAnchor(e,idx){
   const tile=e.target.closest('.b');
   if(tile){
@@ -701,7 +873,7 @@ function capturePointerAnchorOffset(e){
 function getAnchorPointFromEvent(e){
   const baseX=typeof e.clientX==='number' ? e.clientX : 0;
   const baseY=typeof e.clientY==='number' ? e.clientY : 0;
-  const lift=Math.max(6, boardCellSize ? boardCellSize*0.25 : 12);
+  const lift=Math.max(12, boardCellSize ? boardCellSize*0.4 : 18);
   return {
     x:baseX - pointerAnchorOffset.x,
     y:baseY - pointerAnchorOffset.y - lift
@@ -718,6 +890,7 @@ function getCellFromCoords(x,y){
 
 function beginDrag(e,idx){
   if(isClearing){ e.preventDefault(); return; }
+  if(!tray[idx]) return;
   const anchor = takeAnchorFromDrag(e,idx);
   selected={shape:tray[idx].shape, idx, anchor};
   dragGhost=createDragGhost(tray[idx].shape);
@@ -754,6 +927,7 @@ function releaseDragUIState(){
 }
 
 function updateBoardCells(){
+  if(!grid) return;
   document.querySelectorAll('.cell').forEach(c=>{
     const x=+c.dataset.x, y=+c.dataset.y;
     c.classList.toggle('filled', grid[y][x]===FILLED);
@@ -913,39 +1087,74 @@ function attemptPlacement(x,y,originOverride=null){
   }
   const {ox,oy}=origin;
   placeAt(ox,oy,piece);
-  if(typeof idx==='number') tray.splice(idx,1);
+  if(typeof idx==='number' && tray[idx]){
+    tray[idx]=null;
+  }
   selected=null;
   clearPreviewAll();
-  if(tray.length===0){ refillTray(); } else { renderTray(); }
+  if(tray.every(slot=>!slot)){
+    refillTray();
+  }else{
+    renderTray();
+  }
   checkGameOver();
   return true;
 }
 
 function bumpBoard(){
-  boardEl.classList.remove('shake'); void boardEl.offsetWidth; boardEl.classList.add('shake');
+  /* no-op to keep board steady */
 }
 
 function checkGameOver(){
-  const anyFit = tray.length && tray.some(p=>{
-    for(let y=0;y<BOARD;y++) for(let x=0;x<BOARD;x++) if(canPlaceAt(x,y,p.shape)) return true;
+  const activePieces=tray.filter(Boolean);
+  if(!activePieces.length) return;
+  const anyFit = activePieces.some(p=>{
+    for(let y=0;y<BOARD;y++){
+      for(let x=0;x<BOARD;x++){
+        if(canPlaceAt(x,y,p.shape)) return true;
+      }
+    }
     return false;
   });
-  if(tray.length && !anyFit){ finalScoreEl.textContent=score; gameOverEl.classList.add('show'); }
+  if(!anyFit){
+    finalScoreEl.textContent=score;
+    gameOverEl.classList.add('show');
+  }
 }
 
 /* controls */
 document.getElementById('resetBtn').onclick=()=>start();
 document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('show'); start(); };
+if(paletteBtn){
+  paletteBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    togglePalettePanel();
+  });
+}
+document.addEventListener('click', e=>{
+  if(!palettePanelOpen) return;
+  const target=e.target;
+  if(palettePanel && !palettePanel.contains(target) && target!==paletteBtn && (!paletteBtn || !paletteBtn.contains(target))){
+    closePalettePanel();
+  }
+});
+window.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    closePalettePanel();
+  }
+});
 
 /* boot */
 function start(){
+  closePalettePanel();
   score=0;
   scoreEl.textContent=score;
   selected=null;
   isClearing=false;
   clearPreviewAll();
   boardEl.classList.remove('dragging');
-  buildBoard(); newGrid(); clearPendingAnchor(); refillTray();
+  tray=new Array(3).fill(null);
+  buildBoard(); newGrid(); clearPendingAnchor(); refillTray(true);
   scheduleResponsiveSize();
 }
 start();
