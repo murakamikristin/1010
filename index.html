@@ -913,7 +913,7 @@ function getAnchorPointFromEvent(e){
   const baseY=typeof e.clientY==='number' ? e.clientY : 0;
   const cell=boardCellSize || 32;
   const gap=boardGap || 6;
-  const lift=Math.max(cell+gap, 32);
+  const lift=Math.max((cell+gap)*2, 48);
   return {
     x:baseX - pointerAnchorOffset.x,
     y:baseY - pointerAnchorOffset.y - lift
