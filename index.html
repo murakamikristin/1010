@@ -22,9 +22,9 @@
     --shadow:0 14px 45px rgba(39,36,29,.12);
     --max-width:520px;
     --board-size:520px;
-    --cell-radius:8px;
-    --pip-radius:6px;
-    --grid-gap:4px;
+    --cell-radius:10px;
+    --pip-radius:7px;
+    --grid-gap:5px;
     --tray-slot-height:150px;
   }
   @media (max-height: 760px){
@@ -110,7 +110,7 @@
   .btn:active{opacity:.7}
   .score{
     font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif;
-    font-size:clamp(24px,5.5vw,32px);
+    font-size:clamp(28px,6vw,36px);
     letter-spacing:.16em;
     color:var(--text);
     min-width:clamp(64px,14vw,110px);
@@ -118,11 +118,18 @@
     padding:0 4px;
   }
   .score-board{
+    position:relative;
     display:flex;
     align-items:center;
     justify-content:center;
     width:100%;
     gap:clamp(14px,4vw,26px);
+  }
+  .score-divider-wrap{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
   }
   .score-divider{
     width:clamp(28px,7vw,36px);
@@ -361,8 +368,8 @@
               <path fill-rule="evenodd" clip-rule="evenodd" d="M12 3c-4.97 0-9 3.4-9 8s4.03 8 9 8c.956 0 1.836-.094 2.632-.266 1.125-.246 1.868.915 1.368 1.966-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.6-4.03-7-9-7Zm-3.6 2.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.1-.9a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.8 3.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5.6 2.1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
             </svg>
           </button>
-          <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
-        </div>
+        <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
+      </div>
       </div>
       <div class="icon-group">
         <button class="glass-btn" id="resetBtn" aria-label="Reset game">
@@ -377,10 +384,12 @@
     </div>
     <div class="score-board">
       <div class="score" id="score">0</div>
-      <svg class="score-divider" viewBox="0 0 24 24" stroke-width="1.6">
-        <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" fill="currentColor"/>
-        <path d="M12 2v2M12 20v2M4 12H2m20 0h-2M5.636 5.636 4.222 4.222m15.556 0-1.414 1.414m0 12.728 1.414 1.414M4.222 19.778l1.414-1.414" stroke-linecap="round" fill="none"/>
-      </svg>
+      <div class="score-divider-wrap">
+        <svg class="score-divider" viewBox="0 0 24 24" stroke-width="1.6">
+          <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" fill="currentColor"/>
+          <path d="M12 2v2M12 20v2M4 12H2m20 0h-2M5.636 5.636 4.222 4.222m15.556 0-1.414 1.414m0 12.728 1.414 1.414M4.222 19.778l1.414-1.414" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
       <div class="score" id="topScore">0</div>
     </div>
   </div>
@@ -597,15 +606,15 @@ function recomputeBoardMetrics(){
   const newSize=Math.round(someCell.getBoundingClientRect().width);
   if(!newSize || newSize===boardCellSize) return;
   boardCellSize=newSize;
-  const gapPx=Math.max(1, Math.min(5, boardCellSize*0.04));
+  const gapPx=Math.max(2, Math.min(6, boardCellSize*0.05));
   boardGap=gapPx;
   document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
   const trayGap=Math.max(8, gapPx*2);
   trayEl.style.setProperty('--piece-gap', trayGap+'px');
-  const radius=Math.max(3, Math.min(8, boardCellSize*0.06));
+  const radius=Math.max(4, Math.min(10, boardCellSize*0.08));
   document.documentElement.style.setProperty('--cell-radius', radius+'px');
-  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-2)+'px');
-  const slotHeight=Math.max(130, Math.min(240, boardCellSize*3));
+  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-3)+'px');
+  const slotHeight=Math.max(150, Math.min(260, boardCellSize*3.2));
   document.documentElement.style.setProperty('--tray-slot-height', slotHeight+'px');
   renderTray();
 }
