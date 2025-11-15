@@ -93,8 +93,9 @@
     color:var(--text);
   }
   .topbar.frozen{
-    opacity:.4;
+    opacity:0;
     pointer-events:none;
+    visibility:hidden;
   }
 
   .btn{
@@ -318,7 +319,7 @@
   .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
   .modal.show{ display:flex }
   .sheet{ background:#fff; color:var(--text); width:100%; max-width:420px; border-radius:24px; padding:28px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.18); }
-  .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; }
+  .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; white-space:nowrap; }
   .score-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 20px 0; text-transform:uppercase; font-size:14px; letter-spacing:1px; }
   .score-grid.single{ grid-template-columns:1fr; text-transform:none; }
   .score-box{ background:rgba(0,0,0,.04); border-radius:18px; padding:14px; }
@@ -343,11 +344,12 @@
     <div class="icon-group">
       <div class="palette-wrap">
         <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-            <path d="M12 6.5c.44-1.7 1.05-3 1.66-3.98a1.5 1.5 0 0 1 2.44-.2c1.85 2.12 4.39 5.59 3.77 9.44-.41 2.55-1.95 4.88-4.45 5.54-1.56.4-2.82-.09-3.42-.88-.6.79-1.86 1.28-3.42.88-2.5-.66-4.04-2.99-4.45-5.54-.62-3.85 1.92-7.32 3.77-9.44a1.5 1.5 0 0 1 2.44.2c.61.98 1.22 2.28 1.66 3.98z" stroke-linejoin="round"/>
-            <circle cx="9" cy="12" r="1"/>
-            <circle cx="15" cy="12" r="1"/>
-            <circle cx="12" cy="15" r="1"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+            <path d="M12 3c-4.97 0-9 3.357-9 8 0 3.866 3.084 7 7.2 7h2.3a1.5 1.5 0 0 1 0 3H12" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.5" cy="10" r="1"/>
+            <circle cx="12" cy="7.5" r="1"/>
+            <circle cx="15.5" cy="10" r="1"/>
+            <circle cx="14" cy="14" r="1"/>
           </svg>
         </button>
         <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
@@ -356,9 +358,8 @@
     <div class="score-board">
       <div class="score" id="score">0</div>
       <svg class="score-divider" viewBox="0 0 24 24" fill="none" stroke-width="1.8">
-        <path d="M5 10l2-6h10l2 6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M4 10h16l-2 10H6z" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M9 10l1 10M15 10l-1 10" stroke-linecap="round"/>
+        <path d="M3 9l4 4 5-7 5 7 4-4v11H3V9z" stroke-linejoin="round"/>
+        <path d="M3 18h18" stroke-linecap="round"/>
       </svg>
       <div class="score" id="topScore">0</div>
     </div>
@@ -619,6 +620,7 @@ const topbarEl=document.getElementById('topbar');
 const boardEl=document.getElementById('board');
 const trayEl=document.getElementById('tray');
 const scoreEl=document.getElementById('score');
+const topScoreEl=document.getElementById('topScore');
 const gameOverEl=document.getElementById('gameOver');
 const finalScoreEl=document.getElementById('finalScore');
 const paletteBtn=document.getElementById('paletteBtn');
