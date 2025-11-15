@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&family=Coiny&family=Major+Mono+Display&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet" />
 <title>1010 — Minimal</title>
 <style>
   :root{
@@ -22,14 +22,14 @@
     --shadow:0 14px 45px rgba(39,36,29,.12);
     --max-width:520px;
     --board-size:520px;
-    --cell-radius:10px;
-    --pip-radius:7px;
-    --grid-gap:5px;
+    --cell-radius:8px;
+    --pip-radius:6px;
+    --grid-gap:4px;
     --tray-slot-height:150px;
   }
   @media (max-height: 760px){
-    body{ gap:clamp(20px,4vh,28px); padding-top:18px; padding-bottom:18px; }
-    .wrap{ gap:clamp(22px,5vh,32px); }
+    body{ gap:clamp(12px,3vh,18px); padding-top:16px; padding-bottom:16px; }
+    .wrap{ gap:clamp(12px,3vh,20px); }
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -57,8 +57,8 @@
     flex-direction:column;
     align-items:center;
     justify-content:flex-start;
-    gap:32px;
-    padding:28px clamp(8px,3vw,16px) 20px;
+    gap:40px;
+    padding:28px clamp(12px,4vw,24px) 28px;
     min-height:100vh;
     min-height:100dvh;
     user-select:none;
@@ -86,16 +86,15 @@
     position:relative;
     z-index:30;
     display:flex;
-    flex-direction:column;
-    align-items:stretch;
-    gap:clamp(12px,3vw,20px);
+    align-items:center;
+    justify-content:space-between;
+    gap:clamp(40px,12vw,80px);
     letter-spacing:.2px;
     color:var(--text);
   }
   .topbar.frozen{
-    opacity:0;
+    opacity:.4;
     pointer-events:none;
-    visibility:hidden;
   }
 
   .btn{
@@ -109,55 +108,46 @@
   }
   .btn:active{opacity:.7}
   .score{
-    font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif;
-    font-size:clamp(28px,6vw,36px);
-    letter-spacing:.16em;
+    font-weight:700;
+    font-size:clamp(32px,7vw,40px);
+    letter-spacing:.4px;
     color:var(--text);
-    min-width:clamp(68px,13vw,110px);
-    text-align:center;
-    padding:0 6px;
   }
-  .score-board{
+  .icon-group{
+    display:flex;
+    align-items:center;
+    gap:clamp(14px,4vw,20px);
+  }
+  .glass-btn{
+    width:clamp(48px,12vw,56px);
+    height:clamp(48px,12vw,56px);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.35);
+    backdrop-filter:blur(20px);
+    box-shadow:0 10px 28px rgba(0,0,0,.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--text);
     position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:100%;
-    gap:clamp(18px,5vw,30px);
-    padding:0 clamp(28px,8vw,40px);
+    overflow:hidden;
   }
-  .score-slot{
-    flex:1 1 0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .score-slot.left{ justify-content:flex-end; }
-  .score-slot.right{ justify-content:flex-start; }
-  .score-divider-wrap{
+  .glass-btn::after{
+    content:'';
     position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%, -50%);
+    inset:6%;
+    border-radius:inherit;
+    border:1px solid rgba(255,255,255,.7);
+    opacity:.4;
     pointer-events:none;
   }
-  .score-divider{
-    width:clamp(28px,7vw,36px);
-    height:clamp(28px,7vw,36px);
-    stroke:var(--text);
-    fill:currentColor;
-    opacity:.7;
+.glass-btn svg{
+    width:clamp(22px,6vw,26px);
+    height:clamp(22px,6vw,26px);
+    stroke:currentColor;
   }
-  .icon-group{display:flex;align-items:center;gap:clamp(14px,4vw,20px);flex:0 0 auto;}
-  .top-actions{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    width:100%;
-  }
-  .glass-btn{width:clamp(48px,12vw,56px);height:clamp(48px,12vw,56px);border-radius:18px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.35);backdrop-filter:blur(20px);box-shadow:0 10px 28px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;overflow:hidden;}
-  .glass-btn::after{content:'';position:absolute;inset:6%;border-radius:inherit;border:1px solid rgba(255,255,255,.7);opacity:.4;pointer-events:none;}
-  .glass-btn svg{width:clamp(22px,6vw,26px);height:clamp(22px,6vw,26px);stroke:currentColor;}
 
   .wrap{
     width:100%;
@@ -165,7 +155,7 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:clamp(38px,8vw,60px);
+    gap:clamp(16px,4vw,28px);
   }
 
   .board{
@@ -298,12 +288,12 @@
   .palette-panel{
     position:absolute;
     top:calc(100% + 10px);
-    left:0;
-    transform:none;
+    left:50%;
+    transform:translateX(-50%);
     display:none;
     flex-direction:column;
     gap:6px;
-    background:rgba(255,255,255,1);
+    background:rgba(255,255,255,.92);
     border-radius:14px;
     padding:12px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
@@ -348,12 +338,11 @@
   .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
   .modal.show{ display:flex }
   .sheet{ background:#fff; color:var(--text); width:100%; max-width:420px; border-radius:24px; padding:28px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.18); }
-  .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; white-space:nowrap; }
+  .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; }
   .score-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 20px 0; text-transform:uppercase; font-size:14px; letter-spacing:1px; }
-  .score-grid.single{ grid-template-columns:1fr; text-transform:none; }
-  .score-box{ background:transparent; border-radius:18px; padding:14px; }
+  .score-box{ background:rgba(0,0,0,.04); border-radius:18px; padding:14px; }
   .score-box span{ display:block; opacity:.6; margin-bottom:10px; }
-  .score-box strong{ display:block; font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif; font-size:clamp(38px,9vw,50px); font-weight:700; color:var(--text); text-transform:none; letter-spacing:.2em; }
+  .score-box strong{ display:block; font-size:clamp(26px,7vw,36px); font-weight:700; color:var(--text); }
   .sheet .btn{
     font-family:'Sixtyfour', system-ui, sans-serif;
     font-size:clamp(18px,6vw,22px);
@@ -370,45 +359,30 @@
 </head>
 <body>
   <div class="topbar" id="topbar">
-    <div class="top-actions">
-      <div class="icon-group">
-        <div class="palette-wrap">
-          <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3c-4.97 0-9 3.4-9 8s4.03 8 9 8c.956 0 1.836-.094 2.632-.266 1.125-.246 1.868.915 1.368 1.966-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.6-4.03-7-9-7Z"/>
-              <circle cx="8.2" cy="8" r="1.1" fill="var(--bg)"/>
-              <circle cx="11.3" cy="7" r="1.1" fill="var(--bg)"/>
-              <circle cx="14.2" cy="9.8" r="1.1" fill="var(--bg)"/>
-              <circle cx="9.8" cy="11.1" r="1.1" fill="var(--bg)"/>
-            </svg>
-          </button>
-          <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
-        </div>
-      </div>
-      <div class="icon-group">
-        <button class="glass-btn" id="resetBtn" aria-label="Reset game">
+    <div class="icon-group">
+      <div class="palette-wrap">
+        <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-            <path d="M3 4v6h6"></path>
-            <path d="M21 20v-6h-6"></path>
-            <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
-            <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
+            <path d="M12 3c-4.97 0-9 3.395-9 8s4.03 8 9 8c.955 0 1.836-.093 2.632-.265 1.125-.246 1.868.915 1.368 1.965-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.605-4.03-7-9-7Z" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="7.5" cy="10.5" r="1.2"/>
+            <circle cx="12" cy="7.5" r="1.2"/>
+            <circle cx="16.5" cy="10.5" r="1.2"/>
+            <circle cx="14.5" cy="15" r="1.2"/>
           </svg>
         </button>
+        <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
       </div>
     </div>
-    <div class="score-board">
-      <div class="score-slot left">
-        <div class="score" id="score">0</div>
-      </div>
-      <div class="score-divider-wrap">
-        <svg class="score-divider" viewBox="0 0 24 24" stroke-width="1.6">
-          <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" fill="currentColor"/>
-          <path d="M12 2v2M12 20v2M4 12H2m20 0h-2M5.636 5.636 4.222 4.222m15.556 0-1.414 1.414m0 12.728 1.414 1.414M4.222 19.778l1.414-1.414" stroke-linecap="round" fill="none"/>
+    <div class="score" id="score">0</div>
+    <div class="icon-group">
+      <button class="glass-btn" id="resetBtn" aria-label="Reset game">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M3 4v6h6"></path>
+          <path d="M21 20v-6h-6"></path>
+          <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
+          <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
         </svg>
-      </div>
-      <div class="score-slot right">
-        <div class="score" id="topScore">0</div>
-      </div>
+      </button>
     </div>
   </div>
 
@@ -420,9 +394,14 @@
   <div class="modal" id="gameOver">
     <div class="sheet">
       <h2>Game Over</h2>
-      <div class="score-grid single">
+      <div class="score-grid">
         <div class="score-box">
+          <span>Final</span>
           <strong id="finalScore">0</strong>
+        </div>
+        <div class="score-box">
+          <span>Best</span>
+          <strong id="bestScore">0</strong>
         </div>
       </div>
       <button class="btn" id="againBtn">Play again</button>
@@ -593,11 +572,11 @@ function computeBoardPixels(){
   const wrapGap=wrap?parseFloat(getComputedStyle(wrap).gap)||0:0;
   const trayHeight=trayEl?trayEl.offsetHeight:0;
   let availableWidth=Math.min(maxWidth, vw-horizontalPadding);
-  availableWidth=Math.max(200, availableWidth);
+  availableWidth=Math.max(180, availableWidth);
   let availableHeight=window.innerHeight - (verticalPadding + topHeight + wrapGap + trayHeight + 40);
   if(!Number.isFinite(availableHeight) || availableHeight<=0) availableHeight=availableWidth;
   let size=Math.min(availableWidth, availableHeight);
-  return Math.max(220, size);
+  return Math.max(180, size);
 }
 
 function applyBoardSize(){
@@ -624,15 +603,15 @@ function recomputeBoardMetrics(){
   const newSize=Math.round(someCell.getBoundingClientRect().width);
   if(!newSize || newSize===boardCellSize) return;
   boardCellSize=newSize;
-  const gapPx=Math.max(2, Math.min(6, boardCellSize*0.05));
+  const gapPx=Math.max(1, Math.min(5, boardCellSize*0.04));
   boardGap=gapPx;
   document.documentElement.style.setProperty('--grid-gap', gapPx+'px');
   const trayGap=Math.max(8, gapPx*2);
   trayEl.style.setProperty('--piece-gap', trayGap+'px');
-  const radius=Math.max(4, Math.min(10, boardCellSize*0.08));
+  const radius=Math.max(3, Math.min(8, boardCellSize*0.06));
   document.documentElement.style.setProperty('--cell-radius', radius+'px');
-  document.documentElement.style.setProperty('--pip-radius', radius+'px');
-  const slotHeight=Math.max(150, Math.min(260, boardCellSize*3.2));
+  document.documentElement.style.setProperty('--pip-radius', Math.max(0, radius-2)+'px');
+  const slotHeight=Math.max(130, Math.min(240, boardCellSize*3));
   document.documentElement.style.setProperty('--tray-slot-height', slotHeight+'px');
   renderTray();
 }
@@ -657,9 +636,9 @@ const topbarEl=document.getElementById('topbar');
 const boardEl=document.getElementById('board');
 const trayEl=document.getElementById('tray');
 const scoreEl=document.getElementById('score');
-const topScoreEl=document.getElementById('topScore');
 const gameOverEl=document.getElementById('gameOver');
 const finalScoreEl=document.getElementById('finalScore');
+const bestScoreEl=document.getElementById('bestScore');
 const paletteBtn=document.getElementById('paletteBtn');
 const palettePanel=document.getElementById('palettePanel');
 
@@ -751,7 +730,7 @@ function loadBestScore(){
 }
 
 function updateBestScoreDisplay(){
-  if(topScoreEl) topScoreEl.textContent=bestScore;
+  if(bestScoreEl) bestScoreEl.textContent=bestScore;
 }
 
 function freezeTopbar(){
@@ -821,10 +800,11 @@ function drawPiece(container,shape,{fullSize=false,color=null,skipSizing=false}=
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
   const baseCell=boardCellSize || 32;
-  const currentGap=boardGap || 6;
+  const baseGap=boardGap || 6;
   const miniCell=Math.max(MIN_TRAY_CELL, Math.round(baseCell*TRAY_SCALE));
+  const miniGap=Math.max(MIN_TRAY_GAP, Math.round(baseGap*TRAY_SCALE));
   const cellSize=fullSize ? baseCell : miniCell;
-  const gap=fullSize ? currentGap : Math.max(MIN_TRAY_GAP, Math.round(currentGap*0.95));
+  const gap=fullSize ? baseGap : miniGap;
   const fillColor=(color || document.documentElement.style.getPropertyValue('--block') || getComputedStyle(document.documentElement).getPropertyValue('--block') || '#57606A').trim();
   const width=(w*cellSize)+Math.max(0,w-1)*gap;
   const height=(h*cellSize)+Math.max(0,h-1)*gap;
