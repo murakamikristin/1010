@@ -226,6 +226,7 @@
     justify-content:center;
     min-height:120px;
     overflow:visible;
+    position:relative;
   }
   .piece:active{cursor:grabbing}
   .piece.dragging{
@@ -233,6 +234,13 @@
   }
   .piece.empty{
     visibility:hidden;
+    pointer-events:none;
+  }
+  .piece-overlay{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
     pointer-events:none;
   }
   .drag-ghost,
@@ -749,7 +757,7 @@ function refillTray(force=false){
   saveGameState();
 }
 
-function drawPiece(container,shape,{fullSize=false,color=null}={}){
+function drawPiece(container,shape,{fullSize=false,color=null,skipSizing=false}={}){
   container.innerHTML='';
   const xs=shape.map(s=>s[0]), ys=shape.map(s=>s[1]);
   const w=Math.max(...xs)+1, h=Math.max(...ys)+1;
@@ -769,7 +777,7 @@ function drawPiece(container,shape,{fullSize=false,color=null}={}){
   container.style.gridTemplateRows=`repeat(${h}, ${cellSize}px)`;
   container.style.gap=gap+'px';
   const parentEl=container.parentElement;
-  if(parentEl && parentEl!==document.body){
+  if(parentEl && parentEl!==document.body && !skipSizing){
     parentEl.style.minHeight=(height+20)+'px';
   }
   shape.forEach(([x,y])=>{
@@ -843,7 +851,13 @@ function renderTray(){
       card.addEventListener('dragstart', e=>beginDrag(e,idx));
       card.addEventListener('dragend', finishDrag);
       const inner=document.createElement('div'); inner.className='piece-inner'; card.appendChild(inner);
-      drawPiece(inner,p.shape,{fullSize:isActive,color:p.color});
+      drawPiece(inner,p.shape,{fullSize:false,color:p.color});
+      if(isActive && !draggingPiece){
+        const overlay=document.createElement('div');
+        overlay.className='piece-overlay';
+        card.appendChild(overlay);
+        drawPiece(overlay,p.shape,{fullSize:true,color:p.color, skipSizing:true});
+      }
     }else{
       card.setAttribute('aria-hidden','true');
     }
