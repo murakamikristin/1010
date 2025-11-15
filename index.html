@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet" />
 <title>1010 — Minimal</title>
 <style>
   :root{
@@ -37,11 +40,6 @@
       --text:#E0E3EA;
       --shadow:0 18px 40px rgba(0,0,0,.65);
     }
-    .topbar{
-      background:rgba(14,15,16,.85);
-      border-color:rgba(255,255,255,.08);
-      box-shadow:0 14px 40px rgba(0,0,0,.65);
-    }
     .palette-panel{
       background:rgba(14,15,16,.92);
       border-color:rgba(255,255,255,.08);
@@ -59,8 +57,8 @@
     flex-direction:column;
     align-items:center;
     justify-content:flex-start;
-    gap:24px;
-    padding:20px clamp(12px,4vw,24px) 24px;
+    gap:40px;
+    padding:28px clamp(12px,4vw,24px) 28px;
     min-height:100vh;
     min-height:100dvh;
     user-select:none;
@@ -89,17 +87,16 @@
     z-index:30;
     display:flex;
     align-items:center;
-    justify-content:center;
-    padding:clamp(10px,3vw,14px) clamp(18px,4vw,26px);
-    border-radius:999px;
-    border:1px solid rgba(0,0,0,.04);
-    background:rgba(255,255,255,.75);
-    backdrop-filter:blur(18px);
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
-    font-size:clamp(16px,4vw,20px);
+    justify-content:space-between;
+    gap:clamp(40px,12vw,80px);
     letter-spacing:.2px;
     color:var(--text);
   }
+  .topbar.frozen{
+    opacity:.4;
+    pointer-events:none;
+  }
+
   .btn{
     background:transparent;
     border:none;
@@ -112,33 +109,45 @@
   .btn:active{opacity:.7}
   .score{
     font-weight:700;
-    font-size:clamp(26px,6vw,32px);
+    font-size:clamp(32px,7vw,40px);
     letter-spacing:.4px;
     color:var(--text);
   }
-  .icon-btn{
-    position:absolute;
-    right:clamp(12px,4vw,20px);
-    top:50%;
-    transform:translateY(-50%);
-    width:clamp(38px,10vw,44px);
-    height:clamp(38px,10vw,44px);
-    border-radius:50%;
-    border:none;
-    background:rgba(255,255,255,.9);
-    box-shadow:0 6px 16px rgba(0,0,0,.08);
+  .icon-group{
+    display:flex;
+    align-items:center;
+    gap:clamp(14px,4vw,20px);
+  }
+  .glass-btn{
+    width:clamp(48px,12vw,56px);
+    height:clamp(48px,12vw,56px);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.35);
+    backdrop-filter:blur(20px);
+    box-shadow:0 10px 28px rgba(0,0,0,.12);
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:pointer;
     color:var(--text);
+    position:relative;
+    overflow:hidden;
   }
-  .icon-btn svg{
-    width:clamp(18px,5vw,22px);
-    height:clamp(18px,5vw,22px);
+  .glass-btn::after{
+    content:'';
+    position:absolute;
+    inset:6%;
+    border-radius:inherit;
+    border:1px solid rgba(255,255,255,.7);
+    opacity:.4;
+    pointer-events:none;
+  }
+.glass-btn svg{
+    width:clamp(22px,6vw,26px);
+    height:clamp(22px,6vw,26px);
     stroke:currentColor;
   }
-  .icon-btn:active{opacity:.8}
 
   .wrap{
     width:100%;
@@ -171,7 +180,7 @@
     background:var(--tile);
     border-radius:var(--cell-radius);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
-    transition:transform .15s ease, background .2s ease, box-shadow .2s ease;
+    transition:none;
   }
   .cell.filled{
     background:var(--cell-fill, var(--block));
@@ -272,33 +281,15 @@
     z-index:0;
   }
 
-  .palette-btn{
-    position:absolute;
-    left:clamp(12px,4vw,20px);
-    top:50%;
-    transform:translateY(-50%);
-    width:clamp(38px,10vw,44px);
-    height:clamp(38px,10vw,44px);
-    border-radius:50%;
-    border:none;
-    background:rgba(255,255,255,.9);
-    box-shadow:0 6px 16px rgba(0,0,0,.08);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    color:var(--text);
-  }
-  .palette-btn svg{
-    width:clamp(18px,5vw,22px);
-    height:clamp(18px,5vw,22px);
-    stroke:currentColor;
-  }
-  .palette-btn:active{opacity:.8}
+  .palette-wrap{position:relative; display:flex;}
+  .palette-btn{width:clamp(48px,12vw,56px);height:clamp(48px,12vw,56px);border-radius:18px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.35);backdrop-filter:blur(20px);box-shadow:0 10px 28px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;overflow:hidden;}
+  .palette-btn::after{content:'';position:absolute;inset:6%;border-radius:inherit;border:1px solid rgba(255,255,255,.7);opacity:.4;pointer-events:none;}
+  .palette-btn svg{width:clamp(22px,6vw,26px);height:clamp(22px,6vw,26px);stroke:currentColor;}
   .palette-panel{
     position:absolute;
-    top:calc(100% + 8px);
-    left:clamp(12px,4vw,20px);
+    top:calc(100% + 10px);
+    left:50%;
+    transform:translateX(-50%);
     display:none;
     flex-direction:column;
     gap:6px;
@@ -346,31 +337,53 @@
   /* modal */
   .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
   .modal.show{ display:flex }
-  .sheet{ background:#fff; color:var(--text); width:100%; max-width:380px; border-radius:16px; padding:20px; text-align:center }
-  .sheet h2{ margin:0 0 8px 0 } .sheet p{ margin:0 0 16px 0; opacity:.8 }
+  .sheet{ background:#fff; color:var(--text); width:100%; max-width:420px; border-radius:24px; padding:28px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.18); }
+  .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; }
+  .score-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 20px 0; text-transform:uppercase; font-size:14px; letter-spacing:1px; }
+  .score-box{ background:rgba(0,0,0,.04); border-radius:18px; padding:14px; }
+  .score-box span{ display:block; opacity:.6; margin-bottom:10px; }
+  .score-box strong{ display:block; font-size:clamp(26px,7vw,36px); font-weight:700; color:var(--text); }
+  .sheet .btn{
+    font-family:'Sixtyfour', system-ui, sans-serif;
+    font-size:clamp(18px,6vw,22px);
+    text-transform:uppercase;
+    width:100%;
+    padding:14px 0;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.6);
+    background:rgba(255,255,255,.35);
+    backdrop-filter:blur(18px);
+    box-shadow:0 10px 28px rgba(0,0,0,.12);
+  }
 </style>
 </head>
 <body>
-  <div class="topbar">
-    <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-        <path d="M12 3c-4.97 0-9 3.395-9 8s4.03 8 9 8c.955 0 1.836-.093 2.632-.265 1.125-.246 1.868.915 1.368 1.965-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.605-4.03-7-9-7Z" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="7.5" cy="10.5" r="1.2"/>
-        <circle cx="12" cy="7.5" r="1.2"/>
-        <circle cx="16.5" cy="10.5" r="1.2"/>
-        <circle cx="14.5" cy="15" r="1.2"/>
-      </svg>
-    </button>
+  <div class="topbar" id="topbar">
+    <div class="icon-group">
+      <div class="palette-wrap">
+        <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M12 3c-4.97 0-9 3.395-9 8s4.03 8 9 8c.955 0 1.836-.093 2.632-.265 1.125-.246 1.868.915 1.368 1.965-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.605-4.03-7-9-7Z" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="7.5" cy="10.5" r="1.2"/>
+            <circle cx="12" cy="7.5" r="1.2"/>
+            <circle cx="16.5" cy="10.5" r="1.2"/>
+            <circle cx="14.5" cy="15" r="1.2"/>
+          </svg>
+        </button>
+        <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
+      </div>
+    </div>
     <div class="score" id="score">0</div>
-    <button class="icon-btn" id="resetBtn" aria-label="Reset game">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-        <path d="M3 4v6h6"></path>
-        <path d="M21 20v-6h-6"></path>
-        <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
-        <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
-      </svg>
-    </button>
-    <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
+    <div class="icon-group">
+      <button class="glass-btn" id="resetBtn" aria-label="Reset game">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M3 4v6h6"></path>
+          <path d="M21 20v-6h-6"></path>
+          <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
+          <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div class="wrap">
@@ -381,8 +394,16 @@
   <div class="modal" id="gameOver">
     <div class="sheet">
       <h2>Game Over</h2>
-      <p>Final score: <span id="finalScore">0</span></p>
-      <p>Best score: <span id="bestScore">0</span></p>
+      <div class="score-grid">
+        <div class="score-box">
+          <span>Final</span>
+          <strong id="finalScore">0</strong>
+        </div>
+        <div class="score-box">
+          <span>Best</span>
+          <strong id="bestScore">0</strong>
+        </div>
+      </div>
       <button class="btn" id="againBtn">Play again</button>
     </div>
   </div>
@@ -611,6 +632,7 @@ const SHAPES=[
   [[0,0],[1,0],[2,0],[2,1]],
 ];
 
+const topbarEl=document.getElementById('topbar');
 const boardEl=document.getElementById('board');
 const trayEl=document.getElementById('tray');
 const scoreEl=document.getElementById('score');
@@ -711,12 +733,24 @@ function updateBestScoreDisplay(){
   if(bestScoreEl) bestScoreEl.textContent=bestScore;
 }
 
+function freezeTopbar(){
+  if(topbarEl) topbarEl.classList.add('frozen');
+}
+function unfreezeTopbar(){
+  if(topbarEl) topbarEl.classList.remove('frozen');
+}
+
 function recordBestScore(){
   if(score>bestScore){
     bestScore=score;
     updateBestScoreDisplay();
     try{ localStorage.setItem(STORAGE_KEYS.best,String(bestScore)); }catch(err){}
   }
+}
+
+function hideGameOver(){
+  if(gameOverEl) gameOverEl.classList.remove('show');
+  unfreezeTopbar();
 }
 
 buildPalettePanel();
@@ -1287,13 +1321,14 @@ function checkGameOver(){
     finalScoreEl.textContent=score;
     updateBestScoreDisplay();
     gameOverEl.classList.add('show');
+    freezeTopbar();
     clearSavedGame();
   }
 }
 
 /* controls */
 document.getElementById('resetBtn').onclick=()=>start(true);
-document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('show'); start(true); };
+document.getElementById('againBtn').onclick=()=>{ hideGameOver(); start(true); };
 if(paletteBtn){
   paletteBtn.addEventListener('click', e=>{
     e.stopPropagation();
@@ -1316,6 +1351,7 @@ window.addEventListener('keydown', e=>{
 /* boot */
 function start(forceNew=false){
   closePalettePanel();
+  hideGameOver();
   selected=null;
   isClearing=false;
   clearPreviewAll();
