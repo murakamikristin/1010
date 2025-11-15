@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&family=Coiny&family=Major+Mono+Display&display=swap" rel="stylesheet" />
 <title>1010 — Minimal</title>
 <style>
   :root{
@@ -109,23 +109,31 @@
   }
   .btn:active{opacity:.7}
   .score{
-    font-weight:700;
-    font-size:clamp(32px,7vw,40px);
-    letter-spacing:.4px;
+    font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif;
+    font-size:clamp(26px,6vw,34px);
+    letter-spacing:.16em;
     color:var(--text);
+    width:100%;
+    text-align:center;
+    padding:0 4px;
   }
   .score-board{
-    display:flex;
+    display:grid;
+    grid-template-columns:repeat(3, minmax(60px, 1fr));
     align-items:center;
+    justify-items:center;
+    flex:1 1 auto;
     gap:clamp(12px,3vw,24px);
+    min-width:0;
   }
   .score-divider{
-    width:clamp(32px,8vw,40px);
-    height:clamp(32px,8vw,40px);
+    width:clamp(28px,7vw,36px);
+    height:clamp(28px,7vw,36px);
     stroke:var(--text);
+    fill:currentColor;
     opacity:.7;
   }
-  .icon-group{display:flex;align-items:center;gap:clamp(14px,4vw,20px);}
+  .icon-group{display:flex;align-items:center;gap:clamp(14px,4vw,20px);flex:0 0 auto;}
   .glass-btn{width:clamp(48px,12vw,56px);height:clamp(48px,12vw,56px);border-radius:18px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.35);backdrop-filter:blur(20px);box-shadow:0 10px 28px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;overflow:hidden;}
   .glass-btn::after{content:'';position:absolute;inset:6%;border-radius:inherit;border:1px solid rgba(255,255,255,.7);opacity:.4;pointer-events:none;}
   .glass-btn svg{width:clamp(22px,6vw,26px);height:clamp(22px,6vw,26px);stroke:currentColor;}
@@ -136,7 +144,7 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:clamp(28px,6vw,48px);
+    gap:clamp(38px,8vw,60px);
   }
 
   .board{
@@ -274,7 +282,7 @@
     display:none;
     flex-direction:column;
     gap:6px;
-    background:rgba(255,255,255,.92);
+    background:rgba(255,255,255,1);
     border-radius:14px;
     padding:12px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
@@ -322,9 +330,9 @@
   .sheet h2{ margin:0 0 16px 0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; white-space:nowrap; }
   .score-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 20px 0; text-transform:uppercase; font-size:14px; letter-spacing:1px; }
   .score-grid.single{ grid-template-columns:1fr; text-transform:none; }
-  .score-box{ background:rgba(0,0,0,.04); border-radius:18px; padding:14px; }
+  .score-box{ background:transparent; border-radius:18px; padding:14px; }
   .score-box span{ display:block; opacity:.6; margin-bottom:10px; }
-  .score-box strong{ display:block; font-size:clamp(30px,8vw,42px); font-weight:700; color:var(--text); text-transform:none; }
+  .score-box strong{ display:block; font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif; font-size:clamp(34px,8vw,44px); font-weight:700; color:var(--text); text-transform:none; letter-spacing:.18em; }
   .sheet .btn{
     font-family:'Sixtyfour', system-ui, sans-serif;
     font-size:clamp(18px,6vw,22px);
@@ -344,12 +352,8 @@
     <div class="icon-group">
       <div class="palette-wrap">
         <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
-            <path d="M12 3c-4.97 0-9 3.357-9 8 0 3.866 3.084 7 7.2 7h2.3a1.5 1.5 0 0 1 0 3H12" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="8.5" cy="10" r="1"/>
-            <circle cx="12" cy="7.5" r="1"/>
-            <circle cx="15.5" cy="10" r="1"/>
-            <circle cx="14" cy="14" r="1"/>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 3c-4.97 0-9 3.4-9 8s4.03 8 9 8c.956 0 1.836-.094 2.632-.266 1.125-.246 1.868.915 1.368 1.966-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.6-4.03-7-9-7Zm-3.6 2.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.1-.9a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.8 3.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5.6 2.1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
           </svg>
         </button>
         <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
@@ -357,9 +361,9 @@
     </div>
     <div class="score-board">
       <div class="score" id="score">0</div>
-      <svg class="score-divider" viewBox="0 0 24 24" fill="none" stroke-width="1.8">
-        <path d="M3 9l4 4 5-7 5 7 4-4v11H3V9z" stroke-linejoin="round"/>
-        <path d="M3 18h18" stroke-linecap="round"/>
+      <svg class="score-divider" viewBox="0 0 24 24" stroke-width="1.6">
+        <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" fill="currentColor"/>
+        <path d="M12 2v2M12 20v2M4 12H2m20 0h-2M5.636 5.636 4.222 4.222m15.556 0-1.414 1.414m0 12.728 1.414 1.414M4.222 19.778l1.414-1.414" stroke-linecap="round" fill="none"/>
       </svg>
       <div class="score" id="topScore">0</div>
     </div>
