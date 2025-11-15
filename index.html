@@ -113,9 +113,9 @@
     font-size:clamp(28px,6vw,36px);
     letter-spacing:.16em;
     color:var(--text);
-    min-width:clamp(64px,14vw,110px);
+    min-width:clamp(70px,15vw,120px);
     text-align:center;
-    padding:0 4px;
+    padding:0 10px;
   }
   .score-board{
     position:relative;
@@ -123,13 +123,14 @@
     align-items:center;
     justify-content:center;
     width:100%;
-    gap:clamp(14px,4vw,26px);
+    gap:clamp(18px,5vw,30px);
   }
   .score-divider-wrap{
     position:absolute;
     left:50%;
     top:50%;
     transform:translate(-50%, -50%);
+    pointer-events:none;
   }
   .score-divider{
     width:clamp(28px,7vw,36px);
@@ -575,11 +576,11 @@ function computeBoardPixels(){
   const wrapGap=wrap?parseFloat(getComputedStyle(wrap).gap)||0:0;
   const trayHeight=trayEl?trayEl.offsetHeight:0;
   let availableWidth=Math.min(maxWidth, vw-horizontalPadding);
-  availableWidth=Math.max(180, availableWidth);
+  availableWidth=Math.max(200, availableWidth);
   let availableHeight=window.innerHeight - (verticalPadding + topHeight + wrapGap + trayHeight + 40);
   if(!Number.isFinite(availableHeight) || availableHeight<=0) availableHeight=availableWidth;
   let size=Math.min(availableWidth, availableHeight);
-  return Math.max(180, size);
+  return Math.max(220, size);
 }
 
 function applyBoardSize(){
