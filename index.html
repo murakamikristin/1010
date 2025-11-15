@@ -86,9 +86,9 @@
     position:relative;
     z-index:30;
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:clamp(30px,10vw,60px);
+    flex-direction:column;
+    align-items:stretch;
+    gap:clamp(12px,3vw,20px);
     letter-spacing:.2px;
     color:var(--text);
   }
@@ -110,21 +110,19 @@
   .btn:active{opacity:.7}
   .score{
     font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif;
-    font-size:clamp(26px,6vw,34px);
+    font-size:clamp(24px,5.5vw,32px);
     letter-spacing:.16em;
     color:var(--text);
-    width:100%;
+    min-width:clamp(64px,14vw,110px);
     text-align:center;
     padding:0 4px;
   }
   .score-board{
-    display:grid;
-    grid-template-columns:repeat(3, minmax(60px, 1fr));
+    display:flex;
     align-items:center;
-    justify-items:center;
-    flex:1 1 auto;
-    gap:clamp(12px,3vw,24px);
-    min-width:0;
+    justify-content:center;
+    width:100%;
+    gap:clamp(14px,4vw,26px);
   }
   .score-divider{
     width:clamp(28px,7vw,36px);
@@ -134,6 +132,12 @@
     opacity:.7;
   }
   .icon-group{display:flex;align-items:center;gap:clamp(14px,4vw,20px);flex:0 0 auto;}
+  .top-actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+  }
   .glass-btn{width:clamp(48px,12vw,56px);height:clamp(48px,12vw,56px);border-radius:18px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.35);backdrop-filter:blur(20px);box-shadow:0 10px 28px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;overflow:hidden;}
   .glass-btn::after{content:'';position:absolute;inset:6%;border-radius:inherit;border:1px solid rgba(255,255,255,.7);opacity:.4;pointer-events:none;}
   .glass-btn svg{width:clamp(22px,6vw,26px);height:clamp(22px,6vw,26px);stroke:currentColor;}
@@ -332,7 +336,7 @@
   .score-grid.single{ grid-template-columns:1fr; text-transform:none; }
   .score-box{ background:transparent; border-radius:18px; padding:14px; }
   .score-box span{ display:block; opacity:.6; margin-bottom:10px; }
-  .score-box strong{ display:block; font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif; font-size:clamp(34px,8vw,44px); font-weight:700; color:var(--text); text-transform:none; letter-spacing:.18em; }
+  .score-box strong{ display:block; font-family:'Major Mono Display', 'Coiny', system-ui, sans-serif; font-size:clamp(38px,9vw,50px); font-weight:700; color:var(--text); text-transform:none; letter-spacing:.2em; }
   .sheet .btn{
     font-family:'Sixtyfour', system-ui, sans-serif;
     font-size:clamp(18px,6vw,22px);
@@ -349,14 +353,26 @@
 </head>
 <body>
   <div class="topbar" id="topbar">
-    <div class="icon-group">
-      <div class="palette-wrap">
-        <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 3c-4.97 0-9 3.4-9 8s4.03 8 9 8c.956 0 1.836-.094 2.632-.266 1.125-.246 1.868.915 1.368 1.966-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.6-4.03-7-9-7Zm-3.6 2.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.1-.9a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.8 3.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5.6 2.1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+    <div class="top-actions">
+      <div class="icon-group">
+        <div class="palette-wrap">
+          <button class="palette-btn" id="paletteBtn" aria-label="Change block colors">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 3c-4.97 0-9 3.4-9 8s4.03 8 9 8c.956 0 1.836-.094 2.632-.266 1.125-.246 1.868.915 1.368 1.966-.402.848.73 1.552 1.45.964A8 8 0 0 0 21 14c0-4.6-4.03-7-9-7Zm-3.6 2.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.1-.9a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.8 3.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5.6 2.1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+            </svg>
+          </button>
+          <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
+        </div>
+      </div>
+      <div class="icon-group">
+        <button class="glass-btn" id="resetBtn" aria-label="Reset game">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M3 4v6h6"></path>
+            <path d="M21 20v-6h-6"></path>
+            <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
+            <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
           </svg>
         </button>
-        <div class="palette-panel" id="palettePanel" aria-label="Color options"></div>
       </div>
     </div>
     <div class="score-board">
@@ -366,16 +382,6 @@
         <path d="M12 2v2M12 20v2M4 12H2m20 0h-2M5.636 5.636 4.222 4.222m15.556 0-1.414 1.414m0 12.728 1.414 1.414M4.222 19.778l1.414-1.414" stroke-linecap="round" fill="none"/>
       </svg>
       <div class="score" id="topScore">0</div>
-    </div>
-    <div class="icon-group">
-      <button class="glass-btn" id="resetBtn" aria-label="Reset game">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M3 4v6h6"></path>
-          <path d="M21 20v-6h-6"></path>
-          <path d="M5.64 17.66a9 9 0 0 0 12.73 0L21 15"></path>
-          <path d="M3 9l2.64-2.66a9 9 0 0 1 12.73 0L21 9"></path>
-        </svg>
-      </button>
     </div>
   </div>
 
