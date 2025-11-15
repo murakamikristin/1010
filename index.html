@@ -228,7 +228,6 @@
     overflow:visible;
   }
   .piece:active{cursor:grabbing}
-  .piece.selected{ transform:scale(1.03); }
   .piece.dragging{
     visibility:hidden;
   }
@@ -373,6 +372,7 @@
     <div class="sheet">
       <h2>Game Over</h2>
       <p>Final score: <span id="finalScore">0</span></p>
+      <p>Best score: <span id="bestScore">0</span></p>
       <button class="btn" id="againBtn">Play again</button>
     </div>
   </div>
@@ -384,7 +384,7 @@ const CLEAR_DELAY_STEP_MS=50;
 const TRAY_SCALE=0.64;
 const MIN_TRAY_CELL=15;
 const MIN_TRAY_GAP=3;
-const STORAGE_KEYS={palette:'1010-palette'};
+const STORAGE_KEYS={palette:'1010-palette', state:'1010-state', best:'1010-best'};
 const PALETTES=[
   {id:'slate-mix', name:'Slate — Mix', colors:['#3E4349','#57606A','#9CA3AF'], mode:'mix'},
   {id:'slate-single', name:'Slate — Single', colors:['#57606A'], mode:'single'},
@@ -410,6 +410,7 @@ let pointerGhost=null;
 let pointerAnchorOffset={x:0,y:0};
 let palettePanelOpen=false;
 let currentPaletteId=PALETTES[0].id;
+let bestScore=0;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -434,6 +435,69 @@ function assignPieceColor(piece){
   if(!piece) return piece;
   piece.color=pickPieceColor();
   return piece;
+}
+
+function cloneShape(shape){
+  if(!Array.isArray(shape)) return [];
+  return shape.map(point=>Array.isArray(point)?[point[0],point[1]]:[0,0]);
+}
+
+function clonePiece(piece){
+  if(!piece) return null;
+  return {
+    shape:cloneShape(piece.shape),
+    color:piece.color || pickPieceColor()
+  };
+}
+
+function saveGameState(){
+  if(!grid || !Array.isArray(tray)) return;
+  const state={
+    score,
+    grid:grid.map(row=>row.slice()),
+    tray:tray.map(clonePiece)
+  };
+  try{
+    localStorage.setItem(STORAGE_KEYS.state, JSON.stringify(state));
+  }catch(err){}
+}
+
+function clearSavedGame(){
+  try{
+    localStorage.removeItem(STORAGE_KEYS.state);
+  }catch(err){}
+}
+
+function restoreSavedGame(){
+  let raw=null;
+  try{
+    raw=localStorage.getItem(STORAGE_KEYS.state);
+  }catch(err){
+    raw=null;
+  }
+  if(!raw) return false;
+  let data=null;
+  try{
+    data=JSON.parse(raw);
+  }catch(err){
+    data=null;
+  }
+  if(!data || typeof data.score!=='number' || !Array.isArray(data.grid) || data.grid.length!==BOARD) return false;
+  grid=data.grid.map(row=>Array.isArray(row)?row.slice(0,BOARD):Array(BOARD).fill(EMPTY));
+  tray=new Array(3).fill(null);
+  if(Array.isArray(data.tray)){
+    for(let i=0;i<Math.min(3,data.tray.length);i++){
+      const piece=data.tray[i];
+      if(piece && Array.isArray(piece.shape)){
+        tray[i]={shape:cloneShape(piece.shape), color:piece.color || pickPieceColor()};
+      }
+    }
+  }
+  score=data.score;
+  scoreEl.textContent=score;
+  updateBoardCells();
+  renderTray();
+  return true;
 }
 
 function getSelectedAnchor(){
@@ -530,6 +594,7 @@ const SHAPES=[
   [[0,0],[0,1],[0,2],[1,2]],
   [[0,0],[1,0],[2,0],[1,1]],
   [[0,0],[1,0],[1,1],[2,1]],
+  [[0,0],[0,1],[1,1],[1,2]],
   [[0,0],[0,1],[1,1]],
   [[0,0],[1,0],[2,0],[2,1]],
 ];
@@ -539,6 +604,7 @@ const trayEl=document.getElementById('tray');
 const scoreEl=document.getElementById('score');
 const gameOverEl=document.getElementById('gameOver');
 const finalScoreEl=document.getElementById('finalScore');
+const bestScoreEl=document.getElementById('bestScore');
 const paletteBtn=document.getElementById('paletteBtn');
 const palettePanel=document.getElementById('palettePanel');
 
@@ -617,8 +683,33 @@ function loadSavedPalette(){
   applyPalette(saved || currentPaletteId, false);
 }
 
+function loadBestScore(){
+  let saved=null;
+  try{
+    saved=localStorage.getItem(STORAGE_KEYS.best);
+  }catch(err){
+    saved=null;
+  }
+  const parsed=parseInt(saved,10);
+  bestScore=Number.isFinite(parsed) && parsed>0 ? parsed : 0;
+  updateBestScoreDisplay();
+}
+
+function updateBestScoreDisplay(){
+  if(bestScoreEl) bestScoreEl.textContent=bestScore;
+}
+
+function recordBestScore(){
+  if(score>bestScore){
+    bestScore=score;
+    updateBestScoreDisplay();
+    try{ localStorage.setItem(STORAGE_KEYS.best,String(bestScore)); }catch(err){}
+  }
+}
+
 buildPalettePanel();
 loadSavedPalette();
+loadBestScore();
 
 function buildBoard(){
   boardEl.innerHTML='';
@@ -655,6 +746,7 @@ function refillTray(force=false){
   clearPreviewAll();
   clearPendingAnchor();
   renderTray();
+  saveGameState();
 }
 
 function drawPiece(container,shape,{fullSize=false,color=null}={}){
@@ -998,6 +1090,7 @@ function placeAt(x,y,shape,color=null){
   const fillColor=color || pickPieceColor();
   shape.forEach(([dx,dy])=>{ grid[y+dy][x+dx]=fillColor; });
   score += shape.length; scoreEl.textContent=score;
+  recordBestScore();
   updateBoardCells();
   clearLines();
 }
@@ -1152,6 +1245,7 @@ function attemptPlacement(x,y,originOverride=null){
   }else{
     renderTray();
   }
+  saveGameState();
   checkGameOver();
   return true;
 }
@@ -1173,13 +1267,15 @@ function checkGameOver(){
   });
   if(!anyFit){
     finalScoreEl.textContent=score;
+    updateBestScoreDisplay();
     gameOverEl.classList.add('show');
+    clearSavedGame();
   }
 }
 
 /* controls */
-document.getElementById('resetBtn').onclick=()=>start();
-document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('show'); start(); };
+document.getElementById('resetBtn').onclick=()=>start(true);
+document.getElementById('againBtn').onclick=()=>{ gameOverEl.classList.remove('show'); start(true); };
 if(paletteBtn){
   paletteBtn.addEventListener('click', e=>{
     e.stopPropagation();
@@ -1200,16 +1296,30 @@ window.addEventListener('keydown', e=>{
 });
 
 /* boot */
-function start(){
+function start(forceNew=false){
   closePalettePanel();
-  score=0;
-  scoreEl.textContent=score;
   selected=null;
   isClearing=false;
   clearPreviewAll();
   boardEl.classList.remove('dragging');
   tray=new Array(3).fill(null);
-  buildBoard(); newGrid(); clearPendingAnchor(); refillTray(true);
+  buildBoard();
+  clearPendingAnchor();
+  if(forceNew){
+    clearSavedGame();
+    score=0;
+    scoreEl.textContent=score;
+    newGrid();
+    refillTray(true);
+  }else{
+    const restored=restoreSavedGame();
+    if(!restored){
+      score=0;
+      scoreEl.textContent=score;
+      newGrid();
+      refillTray(true);
+    }
+  }
   scheduleResponsiveSize();
 }
 start();
