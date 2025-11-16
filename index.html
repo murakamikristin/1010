@@ -50,7 +50,7 @@
     }
   }
 
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
   html,body{height:100%}
   body{
     margin:0;
@@ -67,7 +67,7 @@
     min-height:100dvh;
     user-select:none;
     -webkit-user-select:none;
-    touch-action:manipulation;
+    touch-action:none;
     -webkit-touch-callout:none;
     overflow:hidden;
     overscroll-behavior:none;
@@ -274,7 +274,7 @@
     position:absolute;
     inset:0;
     border-radius:inherit;
-    background:var(--block);
+    background:var(--clear-color, var(--block));
     animation:cascadeClear .35s ease forwards;
     animation-delay:var(--clear-delay,0s);
   }
@@ -413,15 +413,19 @@
   }
 
   /* modal */
-  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px }
+  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:0 }
   .modal.show{ display:flex }
-  .sheet{ background:#fff; color:var(--text); width:100%; max-width:420px; border-radius:24px; padding:32px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.18); display:flex; flex-direction:column; gap:clamp(20px,4vw,32px); align-items:center; }
+  .sheet{ background:#fff; color:var(--text); width:100%; max-width:none; border-radius:0; padding:32px clamp(18px,6vw,48px); text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.22); display:flex; flex-direction:column; align-items:center; min-height:clamp(240px,45vh,420px); gap:clamp(18px,3vw,28px); }
   .sheet h2{ margin:0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(30px,9vw,40px); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
   .final-score-value{
     font-size:clamp(48px,10vw,72px);
     color:var(--text);
     letter-spacing:.08em;
     font-weight:700;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .sheet .btn{
     font-family:'Sixtyfour', system-ui, sans-serif;
@@ -515,6 +519,7 @@ let pointerAnchorOffset={x:0,y:0};
 let palettePanelOpen=false;
 let currentPaletteId=PALETTES[0].id;
 let bestScore=0;
+let lastPlacementColor=null;
 
 const ZERO_ANCHOR=()=>({dx:0,dy:0});
 
@@ -1215,6 +1220,7 @@ function canPlaceAt(x,y,shape){
 
 function placeAt(x,y,shape,color=null){
   const fillColor=color || pickPieceColor();
+  lastPlacementColor=fillColor;
   shape.forEach(([dx,dy])=>{ grid[y+dy][x+dx]=fillColor; });
   score += shape.length; scoreEl.textContent=score;
   recordBestScore();
@@ -1247,6 +1253,7 @@ function clearLines(){
   rows.forEach(y=>{ for(let x=0;x<BOARD;x++) coords.add(`${x},${y}`); });
   cols.forEach(x=>{ for(let y=0;y<BOARD;y++) coords.add(`${x},${y}`); });
 
+  const clearColor=(lastPlacementColor || getComputedStyle(document.documentElement).getPropertyValue('--block') || '#57606A').trim();
   coords.forEach(key=>{
     const [cx,cy]=key.split(',').map(Number);
     grid[cy][cx]=EMPTY;
@@ -1256,6 +1263,7 @@ function clearLines(){
       cell.classList.remove('preview');
       cell.style.background='';
       cell.style.removeProperty('--cell-fill');
+      cell.style.setProperty('--clear-color', clearColor);
       const rowDelay = rowSet.has(cy) ? cx*delayStepSeconds : 0;
       const colDelay = colSet.has(cx) ? cy*delayStepSeconds : 0;
       const delay = Math.max(rowDelay, colDelay);
@@ -1265,6 +1273,7 @@ function clearLines(){
       const handle=()=>{
         cell.classList.remove('clearing');
         cell.style.removeProperty('--clear-delay');
+        cell.style.removeProperty('--clear-color');
         if(--pendingAnimations===0) finishClear();
       };
       cell.addEventListener('animationend', handle, {once:true});
