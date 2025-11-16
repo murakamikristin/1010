@@ -413,12 +413,12 @@
   }
 
   /* modal */
-  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:0 }
+  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; padding:0 }
   .modal.show{ display:flex }
-  .sheet{ background:#fff; color:var(--text); width:100%; max-width:none; border-radius:0; padding:32px clamp(18px,6vw,48px); text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.22); display:flex; flex-direction:column; align-items:center; min-height:clamp(240px,45vh,420px); gap:clamp(18px,3vw,28px); }
-  .sheet h2{ margin:0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(30px,9vw,40px); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
+  .sheet{ background:#fff; color:var(--text); width:100%; max-width:var(--max-width); border-radius:0 0 24px 24px; padding:20px clamp(18px,6vw,48px) 16px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,.18); display:flex; flex-direction:column; align-items:center; gap:12px; margin:0 auto; }
+  .sheet h2{ margin:0; font-family:'Sixtyfour', system-ui, sans-serif; font-size:clamp(28px,8vw,36px); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
   .final-score-value{
-    font-size:clamp(48px,10vw,72px);
+    font-size:clamp(44px,9vw,64px);
     color:var(--text);
     letter-spacing:.08em;
     font-weight:700;
@@ -427,7 +427,18 @@
     align-items:center;
     justify-content:center;
   }
-  .sheet .btn{
+  .modal-footer{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    padding:16px clamp(18px,6vw,48px) calc(env(safe-area-inset-bottom,0px)+20px);
+    background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.25) 60%);
+    display:flex;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .modal-footer .btn{
     font-family:'Sixtyfour', system-ui, sans-serif;
     font-size:clamp(18px,6vw,22px);
     text-transform:uppercase;
@@ -438,7 +449,9 @@
     background:rgba(255,255,255,.35);
     backdrop-filter:blur(18px);
     box-shadow:0 10px 28px rgba(0,0,0,.12);
-    margin-top:auto;
+    margin-top:0;
+    pointer-events:auto;
+    max-width:400px;
   }
 </style>
 </head>
@@ -481,6 +494,8 @@
     <div class="sheet game-over-sheet">
       <h2>Game Over</h2>
       <div class="score final-score-value" id="finalScore">0</div>
+    </div>
+    <div class="modal-footer">
       <button class="btn" id="againBtn">Play Again</button>
     </div>
   </div>
