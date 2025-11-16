@@ -101,6 +101,11 @@
     width:100%;
     display:flex;
   }
+  .topbar.minimal{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
   .topbar-controls{
     display:grid;
     grid-template-columns:auto 1fr auto;
@@ -827,6 +832,11 @@ function recordBestScore(){
   }
 }
 
+function toggleMinimalTop(){
+  if(!topbarEl) return;
+  topbarEl.classList.toggle('minimal');
+}
+
 function hideGameOver(){
   if(gameOverEl) gameOverEl.classList.remove('show');
   unfreezeTopbar();
@@ -1463,6 +1473,22 @@ start();
 
 window.addEventListener('resize', scheduleResponsiveSize);
 window.addEventListener('orientationchange', scheduleResponsiveSize);
+
+let lastTouchTime=0;
+let touchSequence=[];
+document.addEventListener('touchend', e=>{
+  const now=Date.now();
+  if(now-lastTouchTime<350){
+    e.preventDefault();
+  }
+  touchSequence=touchSequence.filter(ts=>now-ts<1000);
+  touchSequence.push(now);
+  if(touchSequence.length>=3){
+    toggleMinimalTop();
+    touchSequence=[];
+  }
+  lastTouchTime=now;
+},{passive:false});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
