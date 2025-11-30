@@ -1067,7 +1067,13 @@ function startPointerDrag(e,idx){
   const piece=tray[idx];
   if(!piece) return;
   const anchor = takeAnchorFromDrag(e,idx);
-  selected={shape:piece.shape, idx, anchor, color:piece.color};
+  selected={
+    shape:piece.shape,
+    idx,
+    anchor,
+    color:piece.color,
+    tone:Number.isFinite(piece.tone)?piece.tone:null
+  };
   setTimeout(()=>renderTray(),0);
   draggingPiece=true;
   pointerDragId=e.pointerId;
