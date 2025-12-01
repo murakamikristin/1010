@@ -194,8 +194,8 @@
     transition:transform .16s ease, background .18s ease;
   }
   .cell.preview{box-shadow:none;}
-  .cell.clearing{animation:clearSentinel .55s ease forwards;animation-delay:var(--clear-delay, 0s);}
-  .cell.clearing::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--clear-color, var(--block));animation:cascadeClear .55s cubic-bezier(.26,.01,.24,1);animation-delay:var(--clear-delay, 0s);}
+  .cell.clearing{animation:clearSentinel .45s ease forwards;animation-delay:var(--clear-delay, 0s);}
+  .cell.clearing::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--clear-color, var(--block));animation:cascadeClear .45s cubic-bezier(.26,.01,.24,1);animation-delay:var(--clear-delay, 0s);}
   @keyframes clearSentinel{0%{opacity:1;}100%{opacity:1;}}
   @keyframes cascadeClear{
     0%{transform:translateY(0) scale(1);opacity:1;}
@@ -374,7 +374,7 @@
 <script>
 /* ------- Minimal 1010 (drag-and-drop) ------- */
 const BOARD=10, EMPTY=0;
-const CLEAR_DELAY_STEP_MS=70;
+const CLEAR_DELAY_STEP_MS=40;
 const TRAY_SCALE=0.64;
 const MIN_TRAY_CELL=15;
 const MIN_TRAY_GAP=3;
