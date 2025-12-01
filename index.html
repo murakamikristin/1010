@@ -32,8 +32,8 @@
     --overlay:rgba(7,8,15,.28);
     --shadow:0 24px 70px rgba(17,20,30,.14);
     --block:#6F8FA6;
-    --max-width:520px;
-    --board-size:520px;
+    --max-width:620px;
+    --board-size:620px;
     --cell-radius:7px;
     --pip-radius:5px;
     --grid-gap:3px;
@@ -82,7 +82,7 @@
     flex-direction:column;
     align-items:center;
     gap:var(--stack-gap);
-    padding:calc(env(safe-area-inset-top, 20px) + clamp(12px,3vw,24px)) clamp(16px,6vw,40px) clamp(32px,6vw,60px);
+    padding:calc(env(safe-area-inset-top, 16px) + clamp(10px,2.5vw,18px)) clamp(12px,4vw,24px) clamp(24px,5vw,42px);
     transition:background .35s ease,color .35s ease;
     -webkit-user-select:none;
     user-select:none;
@@ -100,18 +100,18 @@
     display:flex;
     flex-direction:column;
     align-items:stretch;
-    gap:clamp(18px,4vw,30px);
+    gap:clamp(14px,3vw,24px);
     transition:opacity var(--transition-fast) ease;
   }
   .controls-row{
     display:flex;
     justify-content:flex-end;
     align-items:center;
-    gap:18px;
-    padding-top:clamp(16px,4vw,28px);
+    gap:14px;
+    padding-top:clamp(12px,3vw,22px);
   }
   .topbar.minimal{opacity:0;pointer-events:none;}
-  .score-stack{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding-top:clamp(24px,5vw,40px);}
+  .score-stack{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding-top:clamp(18px,4vw,32px);}
   .score-value{
     font-size:clamp(28px,8vw,40px);
     font-weight:500;
@@ -146,14 +146,14 @@
   .sf-icon{display:inline-flex;width:26px;height:26px;background-color:currentColor;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;-webkit-mask-size:contain;mask-repeat:no-repeat;mask-position:center;mask-size:contain;}
   .crown-icon{-webkit-mask-image:var(--sf-icon-crown);mask-image:var(--sf-icon-crown);width:32px;height:24px;}
   .palette-icon{-webkit-mask-image:var(--sf-icon-palette);mask-image:var(--sf-icon-palette);}
-  .wrap{width:100%;max-width:var(--max-width);display:flex;flex-direction:column;align-items:center;gap:clamp(20px,5vw,32px);margin-top:clamp(8px,2vw,16px);}
+  .wrap{width:100%;max-width:var(--max-width);display:flex;flex-direction:column;align-items:center;gap:clamp(16px,4vw,26px);margin-top:clamp(6px,2vw,14px);}
   .board{
     width:min(100%, var(--board-size));
     max-width:var(--max-width);
     aspect-ratio:1/1;
     background:var(--bg);
     border:none;
-    padding:var(--grid-gap);
+    padding:calc(var(--grid-gap) * 0.6);
     display:grid;
     grid-template-columns:repeat(10,1fr);
     grid-template-rows:repeat(10,1fr);
@@ -203,7 +203,7 @@
   }
   .piece:active{cursor:grabbing;}
   .piece.empty{visibility:hidden;pointer-events:none;}
-  .piece.dragging{visibility:hidden;}
+  .piece.dragging{opacity:.45;pointer-events:none;}
   .piece-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);pointer-events:none;}
   .piece-inner{display:grid;gap:var(--grid-gap);justify-items:stretch;align-items:stretch;margin:auto;}
   .drag-ghost,
@@ -235,23 +235,24 @@
   .segmented{display:flex;align-items:center;background:var(--surface);border-radius:999px;padding:4px;border:1px solid var(--panel-border);gap:4px;}
   .segment{flex:1 1 0;border:none;border-radius:999px;padding:6px 10px;font-size:14px;color:var(--muted);background:transparent;cursor:pointer;}
   .segment.active{background:var(--icon);color:var(--button-text);}
-  .palette-grid{display:flex;gap:12px;align-items:flex-start;flex-wrap:nowrap;}
+  .palette-grid{display:flex;gap:10px;align-items:flex-start;flex-wrap:nowrap;}
   .palette-option{
-    border:none;
-    border-radius:16px;
-    background:rgba(0,0,0,.03);
-    padding:4px 8px;
-    box-shadow:inset 0 0 0 1px var(--panel-border);
+    border:1px solid transparent;
+    border-radius:14px;
+    background:transparent;
+    padding:6px;
+    box-shadow:none;
     display:flex;
     justify-content:center;
     align-items:center;
     transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
     cursor:pointer;
-    min-width:58px;
+    min-width:0;
   }
   .palette-option.active{
-    box-shadow:0 0 0 2px var(--bg), inset 0 0 0 1px var(--bg);
+    box-shadow:0 0 0 2px var(--panel-border);
     background:rgba(0,0,0,.06);
+    border-color:var(--panel-border);
   }
   .palette-device{
     display:flex;
@@ -552,9 +553,12 @@ function computeBoardPixels(){
   const topHeight=topbar?topbar.offsetHeight:0;
   const wrapGap=wrap?parseFloat(getComputedStyle(wrap).gap)||0:0;
   const trayHeight=trayEl?trayEl.offsetHeight:0;
-  let availableWidth=Math.min(maxWidth, vw-horizontalPadding);
+  const estimatedCell=Math.max(18, (currentBoardPixels || Math.min(maxWidth, vw))/BOARD);
+  const sideMargin=Math.max(estimatedCell/2, 10);
+  const marginReduction=Math.max(0, horizontalPadding - sideMargin*2);
+  let availableWidth=Math.min(maxWidth, vw - marginReduction);
   availableWidth=Math.max(180, availableWidth);
-  let availableHeight=window.innerHeight - (verticalPadding + topHeight + wrapGap + trayHeight + 40);
+  let availableHeight=window.innerHeight - (verticalPadding + topHeight + wrapGap + trayHeight + 16);
   if(!Number.isFinite(availableHeight) || availableHeight<=0) availableHeight=availableWidth;
   let size=Math.min(availableWidth, availableHeight);
   return Math.max(180, size);
@@ -1216,21 +1220,30 @@ function capturePointerAnchorOffset(e){
 function getAnchorPointFromEvent(e){
   const baseX=typeof e.clientX==='number' ? e.clientX : 0;
   const baseY=typeof e.clientY==='number' ? e.clientY : 0;
-  const cell=boardCellSize || 32;
-  const gap=boardGap || 6;
-  const lift=Math.max((cell+gap)*2, 48);
   return {
     x:baseX - pointerAnchorOffset.x,
-    y:baseY - pointerAnchorOffset.y - lift
+    y:baseY - pointerAnchorOffset.y
   };
 }
 
 function getCellFromCoords(x,y){
-  if(!Number.isFinite(x) || !Number.isFinite(y)) return null;
-  const clampedX=Math.max(0, Math.min(window.innerWidth-1, x));
-  const clampedY=Math.max(0, Math.min(window.innerHeight-1, y));
-  const el=document.elementFromPoint(clampedX, clampedY);
-  return el && el.closest('.cell');
+  if(!Number.isFinite(x) || !Number.isFinite(y) || !boardEl) return null;
+  const rect=boardEl.getBoundingClientRect();
+  const styles=getComputedStyle(boardEl);
+  const padX=parseFloat(styles.paddingLeft)||0;
+  const padY=parseFloat(styles.paddingTop)||0;
+  const innerLeft=rect.left+padX;
+  const innerTop=rect.top+padY;
+  const innerWidth=rect.width-(padX*2);
+  const innerHeight=rect.height-(padY*2);
+  if(x<innerLeft || x>innerLeft+innerWidth || y<innerTop || y>innerTop+innerHeight) return null;
+  const gap=boardGap||0;
+  const cellSize=boardCellSize || (innerWidth/BOARD);
+  const stride=cellSize+gap;
+  const col=Math.floor((x-innerLeft)/stride);
+  const row=Math.floor((y-innerTop)/stride);
+  if(col<0 || row<0 || col>=BOARD || row>=BOARD) return null;
+  return document.querySelector(`.cell[data-x="${col}"][data-y="${row}"]`);
 }
 
 function beginDrag(e,idx){
