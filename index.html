@@ -194,8 +194,8 @@
     transition:transform .16s ease, background .18s ease;
   }
   .cell.preview{box-shadow:none;}
-  .cell.clearing{animation:clearSentinel .9s ease forwards;animation-delay:var(--clear-delay, 0s);}
-  .cell.clearing::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--clear-color, var(--block));animation:cascadeClear .9s cubic-bezier(.26,.01,.24,1);animation-delay:var(--clear-delay, 0s);}
+  .cell.clearing{animation:clearSentinel .55s ease forwards;animation-delay:var(--clear-delay, 0s);}
+  .cell.clearing::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--clear-color, var(--block));animation:cascadeClear .55s cubic-bezier(.26,.01,.24,1);animation-delay:var(--clear-delay, 0s);}
   @keyframes clearSentinel{0%{opacity:1;}100%{opacity:1;}}
   @keyframes cascadeClear{
     0%{transform:translateY(0) scale(1);opacity:1;}
@@ -267,7 +267,7 @@
   .toggle-thumb{width:26px;height:26px;border-radius:50%;background:var(--toggle-thumb);transition:transform .2s ease;transform:translateX(0);box-shadow:0 8px 18px rgba(17,20,30,.18);}
   .toggle[aria-checked="true"] .toggle-thumb{transform:translateX(28px);}
   .segmented{display:flex;align-items:center;background:var(--segmented-track);border-radius:999px;padding:6px;border:1px solid var(--settings-border);gap:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 12px 30px rgba(17,20,30,.12);}
-  .segment{flex:1 1 0;border:none;border-radius:999px;padding:9px 14px;font-size:16px;font-weight:500;color:var(--muted);background:transparent;cursor:pointer;transition:background .2s ease, color .2s ease, transform .15s ease, box-shadow .2s ease;}
+  .segment{flex:1 1 0;border:none;border-radius:999px;padding:9px 14px;font-size:16px;font-weight:500;color:var(--text);background:transparent;cursor:pointer;transition:background .2s ease, color .2s ease, transform .15s ease, box-shadow .2s ease;}
   .segment.active{background:var(--segment-active-bg);color:var(--segment-active-text);box-shadow:0 10px 24px rgba(17,20,30,.18);}
   .palette-grid{display:flex;gap:10px;align-items:flex-start;flex-wrap:nowrap;}
   .palette-option{
@@ -374,7 +374,7 @@
 <script>
 /* ------- Minimal 1010 (drag-and-drop) ------- */
 const BOARD=10, EMPTY=0;
-const CLEAR_DELAY_STEP_MS=110;
+const CLEAR_DELAY_STEP_MS=70;
 const TRAY_SCALE=0.64;
 const MIN_TRAY_CELL=15;
 const MIN_TRAY_GAP=3;
