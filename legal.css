@@ -68,16 +68,11 @@ a:hover {
 }
 
 .mark {
-  display: grid;
   width: 30px;
   height: 30px;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
-}
-
-.mark span {
-  border-radius: 6px;
-  background: var(--accent);
+  border-radius: 7px;
+  display: block;
+  object-fit: cover;
 }
 
 .links {
